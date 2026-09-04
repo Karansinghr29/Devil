@@ -10,7 +10,8 @@ PHOTOS
   -> if a file is missing, the site quietly shows a soft placeholder instead.
 
 SONG
-  song.mp3        (your legally obtained "Asku Laska" audio file)
+  song.mp3        <- ALREADY ADDED (Asku Laska)
+                     replace this file if you want a different song
 
 OPTIONAL
   artwork.jpg     (song artwork; set song.artwork in config.js to use it)
