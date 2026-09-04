@@ -390,6 +390,7 @@
           '<span class="frame__no">' + ('0' + (i + 1)).slice(-2) + '</span>' +
           '<img alt="" loading="lazy" decoding="async" src="' + esc(ph.src) + '">' +
         '</div>' +
+        (ph.captionTa ? '<p class="frame__capTa">' + esc(ph.captionTa) + '</p>' : '') +
         (ph.caption ? '<p class="frame__cap">' + esc(ph.caption) + '</p>' : '');
       var shot = $('.frame__shot', f);
       var img = $('img', f);
@@ -622,7 +623,7 @@
         $('#letterCard').addEventListener('click', function (e) {
           if (!done && e.target !== skip) finish();
         });
-        setTimeout(type, 700);
+        setTimeout(type, 1800);   // let the card finish fading in first
       }
     };
   })();

@@ -52,8 +52,8 @@
           <span class="bday__l1">Happy Birthday,</span>
           <span class="bday__l2">My Life <em>❤</em></span>
         </h1>
-        <p class="bday__msg reveal-item" data-d="1" id="revealMsg"></p>
         <div class="ta ta--center" id="revealTa"></div>
+        <p class="bday__msg reveal-item" data-d="1" id="revealMsg"></p>
       </div>
       <button class="cue" data-next="#sec-memories" aria-label="Continue">
         <span>keep going</span><i class="cue__chev"></i>
@@ -64,8 +64,8 @@
     <section class="panel" id="sec-memories">
       <div class="panel__body">
         <h2 class="eyebrow reveal-item" data-d="0" id="memTitle"></h2>
-        <p class="lead reveal-item" data-d="1" id="memSub"></p>
         <div class="ta" id="memTa"></div>
+        <p class="lead reveal-item" data-d="1" id="memSub"></p>
         <div class="gallery" id="gallery"></div>
       </div>
       <button class="cue" data-next="#sec-feelings" aria-label="Continue">
@@ -77,8 +77,8 @@
     <section class="panel panel--center" id="sec-feelings">
       <div class="panel__body">
         <h2 class="eyebrow reveal-item" data-d="0" id="feelTitle"></h2>
-        <div class="whisper" id="feelLines"></div>
         <div class="ta ta--center" id="feelTa"></div>
+        <div class="whisper" id="feelLines"></div>
         <p class="bridge reveal-item" id="feelBridge"></p>
       </div>
       <button class="cue" data-next="#sec-lastyear" aria-label="Continue">
@@ -86,12 +86,12 @@
       </button>
     </section>
 
-    <!-- 4. last year, I hid it in a poem -->
+    <!-- 4. last year: she said it first, I answered with a poem -->
     <section class="panel" id="sec-lastyear">
       <div class="panel__body">
         <p class="eyebrow reveal-item" data-d="0" id="lyEyebrow"></p>
-        <div class="whisper whisper--sm" id="lyLines"></div>
         <div class="ta" id="lyTa"></div>
+        <div class="whisper whisper--sm" id="lyLines"></div>
 
         <p class="card-label reveal-item" id="poemLabel"></p>
         <article class="card card--paper reveal-item" data-d="1">
@@ -108,9 +108,9 @@
     <!-- 5. the song -->
     <section class="panel panel--center" id="sec-song">
       <div class="panel__body">
+        <div class="ta ta--center" id="songTa"></div>
         <h2 class="song-head reveal-item" data-d="0" id="songHead"></h2>
         <p class="lead lead--sm reveal-item" data-d="1" id="songNote"></p>
-        <div class="ta ta--center" id="songTa"></div>
 
         <div class="player reveal-item" data-d="2" id="player">
           <div class="player__art" id="art">
@@ -151,13 +151,13 @@
     <section class="panel" id="sec-letter">
       <div class="panel__body">
         <p class="eyebrow reveal-item" data-d="0" id="letterHead"></p>
+        <div class="ta" id="letterTa"></div>
         <article class="card card--letter reveal-item" data-d="1" id="letterCard">
           <p class="letter__greet" id="letterGreet"></p>
           <div class="letter__body" id="letterBody"></div>
           <p class="letter__sign" id="letterSign"></p>
           <button class="skip" id="skipType" hidden>tap to show it all</button>
         </article>
-        <div class="ta" id="letterTa"></div>
       </div>
       <button class="cue" data-next="#sec-voice" aria-label="Continue">
         <span>hear me say it</span><i class="cue__chev"></i>
@@ -167,8 +167,8 @@
     <!-- 7. my voice -->
     <section class="panel panel--center" id="sec-voice">
       <div class="panel__body">
-        <h2 class="voice-head reveal-item" data-d="0" id="voiceHead"></h2>
         <div class="ta ta--center" id="voiceTa"></div>
+        <h2 class="voice-head reveal-item" data-d="0" id="voiceHead"></h2>
 
         <div class="vnote reveal-item" data-d="1" id="vnote">
           <button class="vnote__btn" id="voiceBtn" aria-label="Play the recording">
@@ -194,6 +194,7 @@
     <!-- 8. the final words -->
     <section class="panel panel--center panel--final" id="sec-final">
       <div class="panel__body">
+        <div class="ta ta--center ta--final" id="finalTa"></div>
         <div class="final" id="finalLines"></div>
 
         <h2 class="love reveal-item" id="loveBig">
@@ -202,7 +203,6 @@
           <span class="love__heart" id="loveHeart">❤</span>
         </h2>
 
-        <div class="ta ta--center ta--final" id="finalTa"></div>
         <div class="final__symbol reveal-item" id="finalSymbol"></div>
         <p class="final__closing reveal-item" id="finalClosing"></p>
         <button class="replay" id="replay"></button>

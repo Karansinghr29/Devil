@@ -383,8 +383,16 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   filter:blur(20px);
   z-index:-1;
 }
+.frame__capTa{
+  margin:14px 4px 2px;
+  font-family:var(--f-tamil);
+  font-size:clamp(14.5px,3.9vw,16.5px);
+  line-height:1.75;
+  color:var(--ta-ink);
+  white-space:pre-line;
+}
 .frame__cap{
-  margin:14px 4px 0;
+  margin:2px 4px 0;
   font-family:var(--f-display);
   font-size:clamp(16px,4.3vw,19px);
   font-style:italic; font-weight:300;
@@ -694,7 +702,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   transition-delay:calc(var(--d) * 900ms);
   text-shadow:0 0 30px rgba(196,167,255,.25);
 }
-.final p{ transition-delay:calc(var(--d) * 900ms); }
+.final p{ transition-delay:calc(var(--d) * 700ms + 1.3s); }
 .is-shown .final p{ opacity:1; transform:none; }
 
 .final__symbol{
@@ -704,7 +712,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   letter-spacing:.28em;
   color:var(--rose);
   text-shadow:0 0 30px rgba(255,95,158,.6);
-  transition-delay:4.1s !important;
+  transition-delay:4.6s !important;
   animation:breathe 4.5s ease-in-out infinite;
 }
 .final__closing{
@@ -716,7 +724,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   -webkit-background-clip:text; background-clip:text;
   color:transparent; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 24px rgba(255,143,195,.35));
-  transition-delay:4.7s !important;
+  transition-delay:5.2s !important;
 }
 .replay{
   margin-top:clamp(34px,7vh,54px);
@@ -726,7 +734,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   background:var(--glass);
   font-size:11.5px; letter-spacing:.2em; text-transform:uppercase;
   color:var(--ink-faint);
-  opacity:0; transition:opacity 1s var(--ease) 5.6s, color .3s, border-color .3s;
+  opacity:0; transition:opacity 1s var(--ease) 6.2s, color .3s, border-color .3s;
 }
 .is-shown .replay{ opacity:1; }
 .replay:active{ color:var(--pink); border-color:rgba(255,143,195,.4); }
@@ -735,10 +743,17 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
    TAMIL LAYER — its own voice, not a subtitle of the English
    ========================================================= */
 .ta{
-  margin:clamp(22px,5vh,36px) 0 0;
+  margin:clamp(12px,2.5vh,20px) 0 clamp(22px,4.5vh,32px);
   padding-left:18px;
   border-left:1px solid rgba(255,143,195,.22);
 }
+
+/* Tamil leads, so anything English after it waits its turn */
+.ta ~ .reveal-item  { transition-delay:calc(var(--d,0) * 140ms + 1.2s); }
+.ta ~ .whisper p    { transition-delay:calc(var(--d) * 380ms + 1.5s); }
+.ta ~ .bridge       { transition-delay:3.6s; }
+.ta ~ .card-label   { transition-delay:2.8s; }
+.card-label + .card { transition-delay:3.3s !important; }
 .ta--center{
   padding-left:0; border-left:0;
   text-align:center;
@@ -754,7 +769,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   color:var(--ta-ink);
   opacity:0; transform:translate3d(0,14px,0);
   transition:opacity .95s var(--ease), transform .95s var(--ease);
-  transition-delay:calc(var(--d) * 260ms + 260ms);
+  transition-delay:calc(var(--d) * 170ms + 150ms);
 }
 .is-shown .ta p{ opacity:1; transform:none; }
 .ta p.is-gap{ height:.75em; margin:0; }
@@ -763,7 +778,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 .ta--final p{
   font-size:clamp(17px,4.7vw,21px);
   color:var(--gold);
-  transition-delay:calc(var(--d) * 320ms + 3s);
+  transition-delay:calc(var(--d) * 320ms + 200ms);
 }
 
 /* smaller whisper, used by the last-year section */
@@ -888,7 +903,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   letter-spacing:.05em;
   max-width:100%;
   transition:opacity 1.5s var(--ease), transform 1.5s var(--ease), filter 1.5s var(--ease);
-  transition-delay:2.2s !important;
+  transition-delay:3s !important;
   filter:blur(9px);
   transform:scale(.93);
 }
