@@ -1,0 +1,19 @@
+Drop your files in this folder.
+
+PHOTOS
+  photo1.jpg
+  photo2.jpg
+  photo3.jpg
+  photo4.jpg
+  photo5.jpg
+  -> portrait photos look best on a phone, ~1200px wide is plenty.
+  -> if a file is missing, the site quietly shows a soft placeholder instead.
+
+SONG
+  song.mp3        (your legally obtained "Asku Laska" audio file)
+
+OPTIONAL
+  artwork.jpg     (song artwork; set song.artwork in config.js to use it)
+
+Filenames are listed in config.js -> memories.photos / song.file
+Change them there if you prefer different names.
