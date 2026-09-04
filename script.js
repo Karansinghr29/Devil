@@ -85,6 +85,113 @@
       sprites.inf = infinitySprite('rgba(196,167,255,0.8)');
       sprites.spark = sparkSprite('rgba(255,238,250,1)');
       sprites.sparkLav = sparkSprite('rgba(200,175,255,1)');
+
+      /* the blues — only ever drawn while the song is playing */
+      sprites.blue     = heartSprite('rgba(116,178,255,0.95)', 'rgba(80,150,255,0.95)');
+      sprites.blueSoft = heartSprite('rgba(176,216,255,0.82)', 'rgba(130,190,255,0.75)');
+      sprites.blueDeep = heartSprite('rgba(88,138,255,0.92)',  'rgba(64,110,255,0.9)');
+      sprites.blueSpark = sparkSprite('rgba(198,228,255,1)');
+      sprites.blueInf  = infinitySprite('rgba(150,200,255,0.85)');
+    }
+
+    /* ---- the song bloom -------------------------------------------------
+       One extra pool of particles, drawn with the same blitter as the rest.
+       songT eases 0..1 so it swells in when she presses play and drains
+       away when she pauses, instead of snapping on and off.              */
+    var song = [];
+    var songT = 0, songTarget = 0;
+    var SONG_MAX = 0;
+
+    function blueOf() {
+      var r = Math.random();
+      return r > 0.72 ? sprites.blueDeep : (r > 0.36 ? sprites.blue : sprites.blueSoft);
+    }
+
+    function makeSong(seed) {
+      var r = Math.random();
+      var kind = r > 0.97 ? 'big' : r > 0.79 ? 'spark' : r > 0.74 ? 'inf' : r > 0.52 ? 'side' : 'up';
+      var p = { kind: kind, ph: rnd(0, 6.28), vx: 0 };
+
+      if (kind === 'side') {                       // drifts in from either edge
+        var left = Math.random() > 0.5;
+        p.x = left ? -50 : W + 50;
+        p.y = rnd(H * 0.08, H * 0.96);
+        p.vx = (left ? 1 : -1) * rnd(18, 48);
+        p.vy = -rnd(3, 15);
+        p.sz = rnd(12, 27);
+        p.al = rnd(0.30, 0.62);
+        p.sway = rnd(5, 16);
+        p.spr = blueOf();
+      } else if (kind === 'big') {                 // a large one, blooms and goes
+        p.x = rnd(W * 0.14, W * 0.86);
+        p.y = seed ? rnd(H * 0.2, H * 0.9) : H + 70;
+        p.vy = -rnd(9, 18);
+        p.sz = rnd(42, 78);
+        p.al = rnd(0.20, 0.36);
+        p.sway = rnd(10, 26);
+        p.life = p.max = rnd(4.5, 7.5);
+        p.spr = Math.random() > 0.5 ? sprites.blueSoft : sprites.blue;
+      } else if (kind === 'spark') {
+        p.x = rnd(0, W);
+        p.y = seed ? rnd(0, H) : H + rnd(10, 120);
+        p.vy = -rnd(10, 30);
+        p.sz = rnd(3, 8);
+        p.al = rnd(0.45, 0.95);
+        p.sway = rnd(6, 20);
+        p.spr = Math.random() > 0.5 ? sprites.blueSpark : sprites.spark;
+      } else if (kind === 'inf') {
+        p.x = rnd(0, W);
+        p.y = seed ? rnd(0, H) : H + rnd(10, 140);
+        p.vy = -rnd(8, 16);
+        p.sz = rnd(22, 42);
+        p.al = rnd(0.16, 0.32);
+        p.sway = rnd(10, 30);
+        p.spr = sprites.blueInf;
+      } else {                                     // the main body: blue hearts rising
+        p.x = rnd(0, W);
+        p.y = seed ? rnd(0, H * 1.1) : H + rnd(10, 190);
+        p.vy = -rnd(18, 48);
+        p.sz = rnd(10, 30);
+        p.al = rnd(0.32, 0.72);
+        p.sway = rnd(10, 40);
+        p.spr = blueOf();
+      }
+      p.baseX = p.x;
+      return p;
+    }
+
+    function stepSong(dt) {
+      /* swell in over ~1.2s, drain out over ~2.5s */
+      var rate = songTarget > songT ? 1.4 : 0.55;
+      songT += (songTarget - songT) * Math.min(1, dt * rate * 2.2);
+      if (songTarget === 0 && songT < 0.004) { songT = 0; if (song.length) song.length = 0; }
+      if (songT <= 0) return;
+
+      /* top the pool up a couple per frame so they arrive, not appear */
+      var want = Math.round(SONG_MAX * songT);
+      if (song.length < want) {
+        var add = Math.min(2, want - song.length);
+        for (var k = 0; k < add; k++) song.push(makeSong(songT < 0.9));
+      }
+
+      for (var i = song.length - 1; i >= 0; i--) {
+        var p = song[i];
+        p.ph += dt * 0.75;
+        p.y += p.vy * dt;
+        if (p.kind === 'side') p.x += p.vx * dt;
+        else p.x = p.baseX + Math.sin(p.ph) * p.sway;
+        if (p.life !== undefined) p.life -= dt;
+
+        if (p.y < -90 || p.x < -90 || p.x > W + 90 || (p.life !== undefined && p.life <= 0)) {
+          song.splice(i, 1);
+          continue;
+        }
+        var a = p.al * songT;
+        /* the big ones fade in and back out instead of just popping */
+        if (p.life !== undefined) a *= Math.sin(Math.PI * (1 - p.life / p.max));
+        ctx.globalAlpha = a;
+        ctx.drawImage(p.spr, p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
+      }
     }
 
     function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -121,6 +228,7 @@
       for (k = 0, n = Math.round(base.h * d); k < n; k++) drift.push(makeDrift('heart', true));
       for (k = 0, n = Math.round(base.i * d); k < n; k++) drift.push(makeDrift('inf', true));
       for (k = 0, n = Math.round(base.s * d); k < n; k++) drift.push(makeDrift('spark', true));
+      SONG_MAX = Math.round((SMALL ? 30 : 54) * d * (REDUCED ? 0.3 : 1));
     }
 
     function resize() {
@@ -150,6 +258,8 @@
         ctx.globalAlpha = p.al;
         ctx.drawImage(p.spr, p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
       }
+
+      stepSong(dt);
 
       for (i = burst.length - 1; i >= 0; i--) {
         p = burst[i];
@@ -183,6 +293,8 @@
           document.hidden ? stop() : start();
         });
       },
+      /* the song bloom — called by the player on play / pause */
+      setSong: function (on) { songTarget = on ? 1 : 0; },
       /* heart shower from a point — used when a balloon pops */
       pop: function (x, y, count) {
         var n = REDUCED ? 6 : (count || (SMALL ? 16 : 24));
@@ -700,10 +812,18 @@
 
         a.addEventListener('loadedmetadata', function () { ready = true; tDur.textContent = fmt(a.duration); });
         a.addEventListener('timeupdate', function () { if (!dragging) paint(); });
-        a.addEventListener('play',  function () { player.classList.add('is-playing'); err.hidden = true; });
-        a.addEventListener('pause', function () { player.classList.remove('is-playing'); });
+        a.addEventListener('play',  function () {
+          player.classList.add('is-playing');
+          err.hidden = true;
+          Atmos.setSong(true);
+        });
+        a.addEventListener('pause', function () {
+          player.classList.remove('is-playing');
+          Atmos.setSong(false);
+        });
         a.addEventListener('ended', function () {
           player.classList.remove('is-playing');
+          Atmos.setSong(false);
           a.currentTime = 0; paint();
         });
         a.addEventListener('error', function () {

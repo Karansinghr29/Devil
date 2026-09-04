@@ -565,6 +565,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 
 .player{
+  position:relative;
   margin:clamp(4px,1.5vh,16px) auto 0;
   max-width:400px;
   padding:18px 18px 20px;
@@ -575,6 +576,28 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
   text-align:center;
+}
+
+/* while the song plays the player breathes inside its own halo */
+.player::before{
+  content:""; position:absolute; inset:-18px;
+  border-radius:38px;
+  background:
+    radial-gradient(60% 60% at 30% 25%, rgba(120,180,255,.30), rgba(120,180,255,0) 70%),
+    radial-gradient(60% 60% at 75% 80%, rgba(255,95,158,.22), rgba(255,95,158,0) 70%);
+  filter:blur(14px);
+  opacity:0;
+  transition:opacity 1.4s var(--ease);
+  pointer-events:none;
+  z-index:-1;
+}
+.player.is-playing::before{
+  opacity:1;
+  animation:playerBreathe 5.2s ease-in-out infinite;
+}
+@keyframes playerBreathe{
+  0%,100%{ transform:scale(1);     opacity:.75; }
+  50%    { transform:scale(1.045); opacity:1; }
 }
 
 .player__art{
@@ -606,8 +629,10 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 .is-playing .player__art{ animation:spin 16s linear infinite; }
 .is-playing .art__ring{
-  box-shadow:0 0 26px rgba(255,95,158,.5), 0 0 60px rgba(139,92,246,.35);
+  box-shadow:0 0 26px rgba(255,95,158,.45), 0 0 62px rgba(120,180,255,.5);
+  border-color:rgba(176,216,255,.35);
 }
+.is-playing .seek__fill{ background:linear-gradient(90deg,var(--rose),#78b2ff); }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 .player__meta h3{

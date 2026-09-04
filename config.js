@@ -55,15 +55,13 @@ var CONFIG = {
   memories: {
     title: "Our Memories",
     ta: [
-      "நினைவுகள் என்பவை",
-      "நாம் வாழ்ந்த நிமிடங்கள் அல்ல…",
-      "",
-      "நீ இருந்த நிமிடங்கள்."
+      "உன் சிரிப்பு…",
+      "என் மனதுக்குப் பிடித்த ஓசை."
     ],
     subtitle: "I keep going back to the ordinary days.\nNothing happened in them. You were just there.",
     photos: [
       { src: "assets/photo1.jpg", captionTa: "அன்று உலகம் லேசாக இருந்தது.",        caption: "The day everything felt lighter." },
-      { src: "assets/photo2.jpg", captionTa: "உன் சிரிப்பு… என் பிடித்த ஓசை.",      caption: "I still hear this one." },
+      { src: "assets/photo2.jpg", captionTa: "இந்த நிமிடம் மட்டும் மீண்டும் வேண்டும்.", caption: "I still hear this one." },
       { src: "assets/photo3.jpg", captionTa: "சாதாரண நாள். சாதாரணமில்லை.",          caption: "Nothing special happened. I remember all of it." },
       { src: "assets/photo4.jpg", captionTa: "எங்கோ ஒரு நாளில்,\nநீ வீடானாய்.",     caption: "Somewhere in between, you became the place I come back to." },
       { src: "assets/photo5.jpg", captionTa: "மீண்டும் ஒரு முறை என்றால்,\nஇதே தான்.", caption: "And I'd choose this again. Every time." }
