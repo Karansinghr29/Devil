@@ -79,6 +79,13 @@ var CONFIG = {
   /* ---------- 7. THE SONG ----------
      Put your legally obtained audio file in  assets/  and name it song.mp3
      (or change "file" below to match your filename).
+
+     "file" also accepts a full URL, as long as it is a DIRECT https link
+     to the audio file itself, e.g.
+         file: "https://example.com/asku-laska.mp3"
+     YouTube / Spotify / JioSaavn / Google Drive share links will NOT work -
+     those are web pages, not audio files.
+
      Artwork is optional - leave "" for the built-in glowing design.     */
   song: {
     heading: "Maybe This Song Says\nWhat I Couldn't ❤",

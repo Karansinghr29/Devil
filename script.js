@@ -687,7 +687,9 @@
         });
         a.addEventListener('error', function () {
           if (!armed) return;                     // no source set yet — nothing to report
-          fail('The song file isn\'t here yet.<br>Drop it in as <code>' + esc(srcPath) + '</code>');
+          fail(/^https?:/i.test(srcPath)
+            ? 'The song couldn\'t load from<br><code>' + esc(srcPath) + '</code>'
+            : 'The song file isn\'t here yet.<br>Drop it in as <code>' + esc(srcPath) + '</code>');
         });
 
         btn.addEventListener('click', toggle);
