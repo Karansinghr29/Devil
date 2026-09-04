@@ -300,6 +300,7 @@
       });
 
       Audio.unlock();
+      Voice.unlock();
 
       setTimeout(function () { gate.classList.add('is-gone'); }, 760);
       setTimeout(function () {
@@ -336,6 +337,26 @@
     return '<div class="ph"><b>❤</b>your photo<code>assets/photo' + i + '.jpg</code></div>';
   }
 
+  /* render a list of lines into a container, one <p> each, staggered.
+     An empty string becomes a blank spacer line. */
+  function renderLines(box, lines, opts) {
+    if (!box || !lines || !lines.length) return;
+    opts = opts || {};
+    lines.forEach(function (line, i) {
+      var p = document.createElement('p');
+      p.style.setProperty('--d', i);
+      if (!String(line).trim()) {
+        p.className = 'is-gap';
+        p.innerHTML = '&nbsp;';
+      } else if (opts.heart) {
+        p.innerHTML = heartify(line);
+      } else {
+        p.textContent = line;
+      }
+      box.appendChild(p);
+    });
+  }
+
   function buildContent() {
     document.title = C.pageTitle || 'For You';
 
@@ -352,11 +373,13 @@
       if (parts.length === 1) $('.bday__l1').textContent = '';
     }
     $('#revealMsg').innerHTML = heartify(r.message || '');
+    renderLines($('#revealTa'), r.ta, { heart: true });
 
     /* memories */
     var m = C.memories || {};
     $('#memTitle').textContent = m.title || '';
     $('#memSub').textContent = m.subtitle || '';
+    renderLines($('#memTa'), m.ta, { heart: true });
     var gal = $('#gallery');
     (m.photos || []).forEach(function (ph, i) {
       var f = document.createElement('div');
@@ -377,36 +400,28 @@
       gal.appendChild(f);
     });
 
-    /* unspoken */
-    var u = C.unspoken || {};
-    $('#unTitle').textContent = u.title || '';
-    var ul = $('#unLines');
-    (u.lines || []).forEach(function (line, i) {
-      var p = document.createElement('p');
-      p.style.setProperty('--d', i);
-      p.textContent = line;
-      ul.appendChild(p);
-    });
-    $('#unBridge').textContent = u.bridge || '';
+    /* the feeling we both already know */
+    var u = C.feelings || {};
+    $('#feelTitle').textContent = u.title || '';
+    renderLines($('#feelLines'), u.lines);
+    renderLines($('#feelTa'), u.ta, { heart: true });
+    $('#feelBridge').textContent = u.bridge || '';
 
-    /* poem */
-    var po = C.poem || {};
-    $('#poemIntro').textContent = po.intro || '';
+    /* last year — the poem I hid it in */
+    var po = C.lastYear || {};
+    $('#lyEyebrow').textContent = po.eyebrow || '';
+    renderLines($('#lyLines'), po.lines);
+    renderLines($('#lyTa'), po.ta, { heart: true });
+    $('#poemLabel').textContent = po.poemLabel || '';
     $('#poemTitle').textContent = po.titleTamil || '';
-    var pb = $('#poemBody');
-    (po.lines || []).forEach(function (line, i) {
-      var p = document.createElement('p');
-      p.style.setProperty('--d', i);
-      if (!String(line).trim()) { p.className = 'is-gap'; p.innerHTML = '&nbsp;'; }
-      else p.textContent = line;
-      pb.appendChild(p);
-    });
+    renderLines($('#poemBody'), po.lines_poem);
     $('#poemSig').textContent = po.signature || '';
 
     /* song */
     var s = C.song || {};
     $('#songHead').innerHTML = heartify(s.heading || '');
     $('#songNote').textContent = s.note || '';
+    renderLines($('#songTa'), s.ta, { heart: true });
     $('#songTitle').textContent = s.title || '';
     $('#songSub').textContent = s.subtitle || '';
     $('#songCredit').textContent = s.credit || '';
@@ -426,16 +441,20 @@
     $('#letterHead').textContent = L.heading || '';
     $('#letterGreet').textContent = (L.greeting || 'Dear') + ' ' + (C.herName || '') + ',';
     $('#letterSign').innerHTML = esc(L.signOff || '') + '<b>' + esc(C.myName || '') + '</b>';
+    renderLines($('#letterTa'), L.ta, { heart: true });
+
+    /* my voice */
+    var V = C.voice || {};
+    $('#voiceHead').innerHTML = heartify(V.heading || '');
+    renderLines($('#voiceTa'), V.ta, { heart: true });
+    $('#voiceLabel').textContent = V.label || 'Listen to me';
+    $('#voiceLabelTa').textContent = V.labelTa || '';
 
     /* finale */
     var F = C.finale || {};
-    var fl = $('#finalLines');
-    (F.lines || []).forEach(function (line, i) {
-      var p = document.createElement('p');
-      p.style.setProperty('--d', i);
-      p.textContent = line;
-      fl.appendChild(p);
-    });
+    renderLines($('#finalLines'), F.lines);
+    $('#loveText').textContent = F.big || 'I LOVE YOU';
+    renderLines($('#finalTa'), F.ta, { heart: true });
     $('#finalSymbol').innerHTML = heartify(F.symbol || '❤ ∞');
     $('#finalClosing').textContent = F.closing || '';
     $('#replay').textContent = F.replayLabel || 'Live it again';
@@ -457,6 +476,7 @@
       el.classList.add('is-shown');
       if (el.id === 'sec-letter') Letter.run();
       if (el.id === 'sec-song') Audio.reached();
+      if (el.id === 'sec-voice') Voice.reached();
     }
 
     function anyLive() {
@@ -723,6 +743,79 @@
   })();
 
   /* =======================================================
+     7. MY VOICE — one tap, no autoplay, never breaks
+     ======================================================= */
+  var Voice = (function () {
+    var a = $('#voiceAudio');
+    var card = $('#vnote');
+    var btn = $('#voiceBtn');
+    var note = $('#voiceNote');
+    var srcPath = '';
+    var armed = false, missing = false;
+
+    /* the file is only requested once she reaches this part of the story,
+       so a missing recording never shows up as an error earlier on */
+    function arm() {
+      if (armed || !srcPath) return;
+      armed = true;
+      a.src = srcPath;
+    }
+
+    function markMissing() {
+      missing = true;
+      card.classList.remove('is-speaking');
+      card.classList.remove('is-idle');
+      card.classList.add('is-empty');
+      note.hidden = false;
+      note.textContent = (C.voice && C.voice.missing) || 'The recording is still coming. ❤';
+      btn.setAttribute('aria-disabled', 'true');
+    }
+
+    function toggle() {
+      arm();
+      if (missing) return;
+      if (a.paused) {
+        var pr = a.play();
+        if (pr && pr.catch) pr.catch(function () { markMissing(); });
+      } else {
+        a.pause();
+      }
+    }
+
+    return {
+      init: function () {
+        srcPath = (C.voice && C.voice.file) || '';
+        if (!srcPath) { markMissing(); return; }
+
+        card.classList.add('is-idle');
+
+        a.addEventListener('play', function () {
+          card.classList.add('is-speaking');
+          card.classList.remove('is-idle');
+        });
+        a.addEventListener('pause', function () {
+          card.classList.remove('is-speaking');
+          if (!missing) card.classList.add('is-idle');
+        });
+        a.addEventListener('ended', function () {
+          card.classList.remove('is-speaking');
+          card.classList.add('is-idle');
+          a.currentTime = 0;
+        });
+        a.addEventListener('error', function () {
+          if (!armed) return;               // nothing requested yet
+          markMissing();
+        });
+
+        btn.addEventListener('click', toggle);
+      },
+      /* shares the balloon tap so mobile browsers trust the later play() */
+      unlock: function () { try { a.load(); } catch (e) {} },
+      reached: function () { arm(); }
+    };
+  })();
+
+  /* =======================================================
      boot
      ======================================================= */
   function boot() {
@@ -731,6 +824,7 @@
     Gate.init();
     Letter.init();
     Audio.init();
+    Voice.init();
     Reveal.init();
     /* keep the story pinned at the top while the gate is up */
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';

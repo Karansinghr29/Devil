@@ -39,7 +39,9 @@
     </div>
   </div>
 
-  <!-- ============ STAGE 2 : THE STORY ============ -->
+  <!-- ============ STAGE 2 : THE STORY ============
+       Order: reveal -> memories -> feelings -> last year's poem
+              -> the song -> letter -> my voice -> I LOVE YOU      -->
   <main id="story" class="story" aria-hidden="true">
 
     <!-- 1. birthday reveal -->
@@ -51,6 +53,7 @@
           <span class="bday__l2">My Life <em>❤</em></span>
         </h1>
         <p class="bday__msg reveal-item" data-d="1" id="revealMsg"></p>
+        <div class="ta ta--center" id="revealTa"></div>
       </div>
       <button class="cue" data-next="#sec-memories" aria-label="Continue">
         <span>keep going</span><i class="cue__chev"></i>
@@ -62,29 +65,35 @@
       <div class="panel__body">
         <h2 class="eyebrow reveal-item" data-d="0" id="memTitle"></h2>
         <p class="lead reveal-item" data-d="1" id="memSub"></p>
+        <div class="ta" id="memTa"></div>
         <div class="gallery" id="gallery"></div>
       </div>
-      <button class="cue" data-next="#sec-unspoken" aria-label="Continue">
+      <button class="cue" data-next="#sec-feelings" aria-label="Continue">
         <span>there's more</span><i class="cue__chev"></i>
       </button>
     </section>
 
-    <!-- 3. unspoken love -->
-    <section class="panel panel--center" id="sec-unspoken">
+    <!-- 3. the feeling we both already know -->
+    <section class="panel panel--center" id="sec-feelings">
       <div class="panel__body">
-        <h2 class="eyebrow reveal-item" data-d="0" id="unTitle"></h2>
-        <div class="whisper" id="unLines"></div>
-        <p class="bridge reveal-item" id="unBridge"></p>
+        <h2 class="eyebrow reveal-item" data-d="0" id="feelTitle"></h2>
+        <div class="whisper" id="feelLines"></div>
+        <div class="ta ta--center" id="feelTa"></div>
+        <p class="bridge reveal-item" id="feelBridge"></p>
       </div>
-      <button class="cue" data-next="#sec-poem" aria-label="Continue">
-        <span>read it</span><i class="cue__chev"></i>
+      <button class="cue" data-next="#sec-lastyear" aria-label="Continue">
+        <span>a year ago</span><i class="cue__chev"></i>
       </button>
     </section>
 
-    <!-- 4. tamil poem -->
-    <section class="panel" id="sec-poem">
+    <!-- 4. last year, I hid it in a poem -->
+    <section class="panel" id="sec-lastyear">
       <div class="panel__body">
-        <p class="eyebrow reveal-item" data-d="0" id="poemIntro"></p>
+        <p class="eyebrow reveal-item" data-d="0" id="lyEyebrow"></p>
+        <div class="whisper whisper--sm" id="lyLines"></div>
+        <div class="ta" id="lyTa"></div>
+
+        <p class="card-label reveal-item" id="poemLabel"></p>
         <article class="card card--paper reveal-item" data-d="1">
           <h2 class="poem__title" id="poemTitle"></h2>
           <div class="poem" id="poemBody"></div>
@@ -101,6 +110,7 @@
       <div class="panel__body">
         <h2 class="song-head reveal-item" data-d="0" id="songHead"></h2>
         <p class="lead lead--sm reveal-item" data-d="1" id="songNote"></p>
+        <div class="ta ta--center" id="songTa"></div>
 
         <div class="player reveal-item" data-d="2" id="player">
           <div class="player__art" id="art">
@@ -147,16 +157,52 @@
           <p class="letter__sign" id="letterSign"></p>
           <button class="skip" id="skipType" hidden>tap to show it all</button>
         </article>
+        <div class="ta" id="letterTa"></div>
       </div>
-      <button class="cue" data-next="#sec-final" aria-label="Continue">
-        <span>almost there</span><i class="cue__chev"></i>
+      <button class="cue" data-next="#sec-voice" aria-label="Continue">
+        <span>hear me say it</span><i class="cue__chev"></i>
       </button>
     </section>
 
-    <!-- 7. finale -->
+    <!-- 7. my voice -->
+    <section class="panel panel--center" id="sec-voice">
+      <div class="panel__body">
+        <h2 class="voice-head reveal-item" data-d="0" id="voiceHead"></h2>
+        <div class="ta ta--center" id="voiceTa"></div>
+
+        <div class="vnote reveal-item" data-d="1" id="vnote">
+          <button class="vnote__btn" id="voiceBtn" aria-label="Play the recording">
+            <span class="vnote__ring" aria-hidden="true"></span>
+            <span class="vnote__ico" aria-hidden="true">
+              <svg class="ic ic--mic" viewBox="0 0 24 24"><path d="M12 14.5a3 3 0 0 0 3-3v-5a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3.2a.9.9 0 0 0-1.8 0 3.2 3.2 0 0 1-6.4 0 .9.9 0 0 0-1.8 0 5 5 0 0 0 4.1 4.9v2a.9.9 0 0 0 1.8 0v-2a5 5 0 0 0 4.1-4.9z"/></svg>
+              <svg class="ic ic--stop" viewBox="0 0 24 24"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+            </span>
+          </button>
+          <div class="vnote__wave" id="voiceWave" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <p class="vnote__label" id="voiceLabel"></p>
+          <p class="vnote__labelTa" id="voiceLabelTa"></p>
+          <p class="vnote__note" id="voiceNote" hidden></p>
+        </div>
+      </div>
+      <button class="cue" data-next="#sec-final" aria-label="Continue">
+        <span>and finally</span><i class="cue__chev"></i>
+      </button>
+    </section>
+
+    <!-- 8. the final words -->
     <section class="panel panel--center panel--final" id="sec-final">
       <div class="panel__body">
         <div class="final" id="finalLines"></div>
+
+        <h2 class="love reveal-item" id="loveBig">
+          <span class="love__glow" aria-hidden="true"></span>
+          <span class="love__text" id="loveText"></span>
+          <span class="love__heart" id="loveHeart">❤</span>
+        </h2>
+
+        <div class="ta ta--center ta--final" id="finalTa"></div>
         <div class="final__symbol reveal-item" id="finalSymbol"></div>
         <p class="final__closing reveal-item" id="finalClosing"></p>
         <button class="replay" id="replay"></button>
@@ -166,6 +212,7 @@
   </main>
 
   <audio id="audio" preload="metadata" playsinline></audio>
+  <audio id="voiceAudio" preload="metadata" playsinline></audio>
 
   <script src="config.js"></script>
   <script src="script.js"></script>

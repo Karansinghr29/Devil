@@ -3,6 +3,12 @@
    Everything you will ever want to change lives in THIS file.
    You never need to touch style.css or script.js.
    Save the file, refresh the page, done.
+
+   ABOUT THE TWO LANGUAGES
+   Every section has English text and a separate "ta" (Tamil) block.
+   The Tamil is NOT a translation of the English - it is its own
+   poetic layer saying the same feeling a different way.
+   Each item in a "ta" list is one line. Use "" for a blank line.
    ============================================================ */
 
 var CONFIG = {
@@ -10,7 +16,7 @@ var CONFIG = {
   /* ---------- 1. NAMES + BROWSER TAB ---------- */
   herName: "Her Name",              // used in the letter greeting
   myName: "Me",                     // used in the letter signature
-  pageTitle: "For You ❤",      // browser tab text (keep it a secret, no spoilers)
+  pageTitle: "For You ❤",           // browser tab text (no spoilers)
 
   /* ---------- 2. OPENING SCREEN (balloons) ---------- */
   opening: {
@@ -21,7 +27,11 @@ var CONFIG = {
   /* ---------- 3. BIRTHDAY REVEAL ---------- */
   reveal: {
     title: "Happy Birthday, My Life",       // the ❤ is added by the design
-    message: "Today is all about you…\nand I just wanted to make this little moment special for you. ❤"
+    message: "Today is all about you…\nand I just wanted to make this little moment special for you. ❤",
+    ta: [
+      "இன்று உலகத்திற்கு உன் பிறந்தநாள்.",
+      "எனக்கோ… ஒவ்வொரு நாளும் நீதான். ❤"
+    ]
   },
 
   /* ---------- 4. OUR MEMORIES ----------
@@ -34,6 +44,10 @@ var CONFIG = {
   memories: {
     title: "Our Memories",
     subtitle: "Some moments become memories…\nbecause you were there.",
+    ta: [
+      "புகைப்படங்களில் தேதிகள் நிற்கும்…",
+      "என் நினைவில் நீ மட்டும் நிற்கிறாய்."
+    ],
     photos: [
       { src: "assets/photo1.jpg", caption: "The day everything felt lighter." },
       { src: "assets/photo2.jpg", caption: "You laughing — my favourite sound." },
@@ -43,35 +57,57 @@ var CONFIG = {
     ]
   },
 
-  /* ---------- 5. THE THINGS I NEVER SAID ---------- */
-  unspoken: {
-    title: "The Things I Never Said",
+  /* ---------- 5. THE FEELING WE BOTH ALREADY KNOW ---------- */
+  feelings: {
+    title: "The One Thing We Both Know",
     lines: [
-      "There are feelings I never managed to say out loud.",
-      "I kept looking for the right words,",
-      "and every single time, you understood me before I found them.",
-      "So maybe I never had to say it.",
-      "Maybe you always knew."
+      "We both already know what this feeling is.",
+      "I was just the one who hadn't put it into those words yet.",
+      "Not because I wasn't sure.",
+      "Maybe I was only waiting for the right moment."
     ],
-    bridge: "But I still wanted to write it down for you."
+    ta: [
+      "நம் இருவருக்கும் தெரிந்த ஒன்று…",
+      "நான் மட்டும் அதை வார்த்தையாக்கவில்லை.",
+      "",
+      "அந்த ஒரு வார்த்தைக்காகவே",
+      "இத்தனை நாள் காத்திருந்தேன். ∞"
+    ],
+    bridge: "And it started a year ago, on my own birthday."
   },
 
-  /* ---------- 6. TAMIL POEM ----------
-     >>> REPLACE THE LINES BELOW WITH YOUR OWN TAMIL POEM. <<<
+  /* ---------- 6. LAST YEAR'S POEM ----------
+     The framing text, then the poem you actually wrote her last year.
+
+     >>> PUT YOUR OWN TAMIL POEM IN "lines" BELOW. <<<
      One line of the poem = one item in the list.
-     Use an empty string ""  to leave a blank line between stanzas.
-     Tamil, English or a mix - all render correctly.                */
-  poem: {
-    intro: "Words I wanted to tell you…",
-    titleTamil: "சொல்ல நினைத்தது…",
+     Use an empty string ""  to leave a blank line between stanzas.   */
+  lastYear: {
+    eyebrow: "Last year, on my birthday…",
     lines: [
+      "You said it first. You said it plainly.",
+      "I answered you with a poem instead —",
+      "and I let the words hide inside it.",
+      "Maybe this time, I shouldn't hide them anymore."
+    ],
+    ta: [
+      "கடந்த வருடம்",
+      "சொல்ல நினைத்ததைக் கவிதைக்குள் மறைத்தேன்…",
+      "புரிந்துகொள்வாய் என்று நினைத்தேன்.",
+      "",
+      "இந்த முறை மட்டும்,",
+      "மறைக்காமல் சொல்லப் போகிறேன். ❤"
+    ],
+    poemLabel: "The poem I gave you then",
+    titleTamil: "சொல்ல நினைத்தது…",
+    lines_poem: [
       "இங்கே உங்கள் கவிதையின்",
       "முதல் வரி வரும்.",
       "",
       "(இந்த வரிகளை நீக்கிவிட்டு",
       "உங்கள் கவிதையை இங்கே எழுதுங்கள்.)",
       "",
-      "config.js → poem.lines"
+      "config.js → lastYear.lines_poem"
     ],
     signature: ""   // optional, e.g. "— உன்…"  (leave "" to hide)
   },
@@ -90,6 +126,13 @@ var CONFIG = {
   song: {
     heading: "Maybe This Song Says\nWhat I Couldn't ❤",
     note: "Press play. Listen to it the way I meant it.",
+    ta: [
+      "கடந்த முறை கவிதைக்குள் மறைத்தேன்…",
+      "இந்த முறை இசைக்குள் சொல்லப் போகிறேன்.",
+      "",
+      "நீ ஏற்கனவே அறிந்த உணர்வுக்கு,",
+      "இன்று என் வார்த்தைகளையும் சேர்க்கிறேன். ❤"
+    ],
     title: "Asku Laska",
     subtitle: "Nanban (2012)",
     credit: "Music: Harris Jayaraj",
@@ -99,33 +142,68 @@ var CONFIG = {
   },
 
   /* ---------- 8. PERSONAL LETTER ----------
-     Each item in "paragraphs" becomes its own line/paragraph.       */
+     Each item in "paragraphs" becomes its own paragraph.
+     The Tamil block below it is what leads her into the voice note.   */
   letter: {
     heading: "From my heart…",
     greeting: "Dear",            // rendered as: Dear <herName>,
     paragraphs: [
-      "I'm not very good at saying things at the right moment. You already know that.",
-      "But somewhere between all our ordinary days, you became the part of my life I never want to explain to anyone - I just want to keep it.",
-      "Thank you for understanding the silences. Thank you for reading between my lines. Thank you for staying, even on the days I gave you nothing but a quiet smile.",
-      "Today is your day. And whatever I couldn't say out loud, I hope you feel all of it here."
+      "I'm not good at saying things at the right moment. You've told me that yourself.",
+      "You asked me once why I never just say it casually. It was never that I didn't feel it. It's that I didn't want it to be casual.",
+      "Some words you only get to say for the first time once. I wanted the moment to deserve them.",
+      "I think this is that moment. I think it's today."
     ],
-    signOff: "Always yours,"
+    signOff: "Always yours,",
+    ta: [
+      "எழுதி முடித்த பிறகும்",
+      "சொல்லாத ஒரு வரி மீதம் இருக்கிறது…",
+      "",
+      "அதை எழுத்தில் அல்ல,",
+      "என் குரலில் சொல்கிறேன். ❤"
+    ]
   },
 
-  /* ---------- 9. FINAL SCREEN ---------- */
+  /* ---------- 9. MY VOICE ----------
+     Record yourself saying it, save as  assets/voice.mp3  and refresh.
+     Using .m4a instead? Just change "file" below - nothing else:
+         file: "assets/voice.m4a"
+     Until the file exists the card stays, calm and unbroken, and simply
+     says the recording is still coming.                                */
+  voice: {
+    heading: "One last thing\nI wanted you to hear from me…",
+    ta: [
+      "எழுத்தில் சொல்ல முயன்றேன்…",
+      "கவிதைக்குள் மறைத்து வைத்தேன்…",
+      "இசையிலும் சொல்லிப் பார்த்தேன்…",
+      "",
+      "ஆனால் இந்த முறை,",
+      "என் குரலிலேயே நீ கேட்க வேண்டும். ❤"
+    ],
+    label: "Listen to me",
+    labelTa: "என் குரலில்…",
+    file: "assets/voice.mp3",
+    missing: "The recording is still coming. ❤"
+  },
+
+  /* ---------- 10. THE FINAL WORDS ---------- */
   finale: {
     lines: [
-      "Some feelings don't need to be said.",
-      "They just need to be understood."
+      "No poem this time.",
+      "No song to say it for me."
+    ],
+    big: "I LOVE YOU",          // the climax - shown large
+    ta: [
+      "இத்தனை நாள் காத்திருந்தது",
+      "இந்த ஒரு வார்த்தைக்காகத்தான்."
     ],
     symbol: "❤ ∞",
     closing: "Happy Birthday, My Love.",
     replayLabel: "Live it again"
   },
 
-  /* ---------- 10. ATMOSPHERE (safe to leave alone) ---------- */
+  /* ---------- 11. ATMOSPHERE (safe to leave alone) ---------- */
   atmosphere: {
-    density: 1,        // 0.5 = calmer, 1 = default, 1.5 = richer (raise only if it feels smooth)
+    density: 1,        // 0.5 = calmer, 1 = default, 1.5 = richer
     balloonCount: 6    // balloons on the opening screen (5-8 looks best)
   }
 };
