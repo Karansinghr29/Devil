@@ -107,54 +107,82 @@
       return r > 0.72 ? sprites.blueDeep : (r > 0.36 ? sprites.blue : sprites.blueSoft);
     }
 
+    /* mostly blue, with a few of the warm ones mixed through */
+    function songHeart() {
+      return Math.random() > 0.82
+        ? (Math.random() > 0.5 ? sprites.heartSoft : sprites.heart)
+        : blueOf();
+    }
+
+    /* seed=true scatters them over the whole screen (the opening swell);
+       seed=false starts them just under the fold so replacements are in
+       view within a second or two, not half a minute. */
     function makeSong(seed) {
       var r = Math.random();
-      var kind = r > 0.97 ? 'big' : r > 0.79 ? 'spark' : r > 0.74 ? 'inf' : r > 0.52 ? 'side' : 'up';
-      var p = { kind: kind, ph: rnd(0, 6.28), vx: 0 };
+      var kind = r > 0.975 ? 'cross'
+               : r > 0.945 ? 'big'
+               : r > 0.90  ? 'inf'
+               : r > 0.72  ? 'spark'
+               : r > 0.56  ? 'side'
+               : 'up';
+      var p = { kind: kind, ph: rnd(0, 6.28), vx: 0, glow: false };
 
       if (kind === 'side') {                       // drifts in from either edge
         var left = Math.random() > 0.5;
         p.x = left ? -50 : W + 50;
-        p.y = rnd(H * 0.08, H * 0.96);
-        p.vx = (left ? 1 : -1) * rnd(18, 48);
-        p.vy = -rnd(3, 15);
-        p.sz = rnd(12, 27);
-        p.al = rnd(0.30, 0.62);
+        p.y = rnd(H * 0.06, H * 0.98);
+        p.vx = (left ? 1 : -1) * rnd(22, 58);
+        p.vy = -rnd(4, 18);
+        p.sz = rnd(13, 30);
+        p.al = rnd(0.32, 0.66);
         p.sway = rnd(5, 16);
-        p.spr = blueOf();
-      } else if (kind === 'big') {                 // a large one, blooms and goes
-        p.x = rnd(W * 0.14, W * 0.86);
-        p.y = seed ? rnd(H * 0.2, H * 0.9) : H + 70;
-        p.vy = -rnd(9, 18);
-        p.sz = rnd(42, 78);
-        p.al = rnd(0.20, 0.36);
-        p.sway = rnd(10, 26);
-        p.life = p.max = rnd(4.5, 7.5);
+        p.spr = songHeart();
+      } else if (kind === 'cross') {               // a big one, right across the screen
+        var l2 = Math.random() > 0.5;
+        p.x = l2 ? -90 : W + 90;
+        p.y = rnd(H * 0.15, H * 0.85);
+        p.vx = (l2 ? 1 : -1) * rnd(34, 74);
+        p.vy = -rnd(5, 14);
+        p.sz = rnd(52, 92);
+        p.al = rnd(0.16, 0.30);
+        p.sway = rnd(8, 20);
         p.spr = Math.random() > 0.5 ? sprites.blueSoft : sprites.blue;
+        p.glow = true;
+      } else if (kind === 'big') {                 // blooms in place, then goes
+        p.x = rnd(W * 0.12, W * 0.88);
+        p.y = seed ? rnd(H * 0.2, H * 0.9) : H + rnd(4, 60);
+        p.vy = -rnd(14, 30);
+        p.sz = rnd(40, 76);
+        p.al = rnd(0.20, 0.38);
+        p.sway = rnd(10, 26);
+        p.life = p.max = rnd(5, 9);
+        p.spr = Math.random() > 0.5 ? sprites.blueSoft : sprites.blue;
+        p.glow = true;
       } else if (kind === 'spark') {
         p.x = rnd(0, W);
-        p.y = seed ? rnd(0, H) : H + rnd(10, 120);
-        p.vy = -rnd(10, 30);
-        p.sz = rnd(3, 8);
+        p.y = seed ? rnd(0, H) : H + rnd(4, 50);
+        p.vy = -rnd(22, 58);
+        p.sz = rnd(3, 9);
         p.al = rnd(0.45, 0.95);
-        p.sway = rnd(6, 20);
-        p.spr = Math.random() > 0.5 ? sprites.blueSpark : sprites.spark;
+        p.sway = rnd(6, 22);
+        p.spr = Math.random() > 0.45 ? sprites.blueSpark : sprites.spark;
       } else if (kind === 'inf') {
         p.x = rnd(0, W);
-        p.y = seed ? rnd(0, H) : H + rnd(10, 140);
-        p.vy = -rnd(8, 16);
-        p.sz = rnd(22, 42);
-        p.al = rnd(0.16, 0.32);
+        p.y = seed ? rnd(0, H) : H + rnd(4, 60);
+        p.vy = -rnd(18, 34);
+        p.sz = rnd(22, 44);
+        p.al = rnd(0.16, 0.34);
         p.sway = rnd(10, 30);
         p.spr = sprites.blueInf;
-      } else {                                     // the main body: blue hearts rising
+      } else {                                     // the main body: hearts rising
         p.x = rnd(0, W);
-        p.y = seed ? rnd(0, H * 1.1) : H + rnd(10, 190);
-        p.vy = -rnd(18, 48);
-        p.sz = rnd(10, 30);
-        p.al = rnd(0.32, 0.72);
-        p.sway = rnd(10, 40);
-        p.spr = blueOf();
+        p.y = seed ? rnd(-H * 0.1, H * 1.05) : H + rnd(4, 70);
+        p.vy = -rnd(30, 76);
+        p.sz = rnd(11, 34);
+        p.al = rnd(0.34, 0.78);
+        p.sway = rnd(12, 44);
+        p.spr = songHeart();
+        p.glow = Math.random() > 0.84;
       }
       p.baseX = p.x;
       return p;
@@ -167,28 +195,38 @@
       if (songTarget === 0 && songT < 0.004) { songT = 0; if (song.length) song.length = 0; }
       if (songT <= 0) return;
 
-      /* top the pool up a couple per frame so they arrive, not appear */
+      /* Keep the pool full for as long as the song runs. New ones enter
+         just below the fold, so the screen never quietly empties out. */
       var want = Math.round(SONG_MAX * songT);
       if (song.length < want) {
-        var add = Math.min(2, want - song.length);
-        for (var k = 0; k < add; k++) song.push(makeSong(songT < 0.9));
+        var add = Math.min(3, want - song.length);
+        for (var k = 0; k < add; k++) song.push(makeSong(songT < 0.85));
       }
+
+      /* on pause they ease to a drift rather than carrying on at full tilt */
+      var sp = 0.4 + 0.6 * songT;
 
       for (var i = song.length - 1; i >= 0; i--) {
         var p = song[i];
         p.ph += dt * 0.75;
-        p.y += p.vy * dt;
-        if (p.kind === 'side') p.x += p.vx * dt;
+        p.y += p.vy * dt * sp;
+        if (p.kind === 'side' || p.kind === 'cross') p.x += p.vx * dt * sp;
         else p.x = p.baseX + Math.sin(p.ph) * p.sway;
         if (p.life !== undefined) p.life -= dt;
 
-        if (p.y < -90 || p.x < -90 || p.x > W + 90 || (p.life !== undefined && p.life <= 0)) {
+        if (p.y < -110 || p.x < -130 || p.x > W + 130 || (p.life !== undefined && p.life <= 0)) {
           song.splice(i, 1);
           continue;
         }
         var a = p.al * songT;
         /* the big ones fade in and back out instead of just popping */
         if (p.life !== undefined) a *= Math.sin(Math.PI * (1 - p.life / p.max));
+
+        if (p.glow) {                              // a soft bloom under the shape
+          ctx.globalAlpha = a * 0.26;
+          var gz = p.sz * 1.9;
+          ctx.drawImage(p.spr, p.x - gz / 2, p.y - gz / 2, gz, gz);
+        }
         ctx.globalAlpha = a;
         ctx.drawImage(p.spr, p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
       }
@@ -228,7 +266,7 @@
       for (k = 0, n = Math.round(base.h * d); k < n; k++) drift.push(makeDrift('heart', true));
       for (k = 0, n = Math.round(base.i * d); k < n; k++) drift.push(makeDrift('inf', true));
       for (k = 0, n = Math.round(base.s * d); k < n; k++) drift.push(makeDrift('spark', true));
-      SONG_MAX = Math.round((SMALL ? 30 : 54) * d * (REDUCED ? 0.3 : 1));
+      SONG_MAX = Math.round((SMALL ? 54 : 92) * d * (REDUCED ? 0.28 : 1));
     }
 
     function resize() {
