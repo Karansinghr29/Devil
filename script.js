@@ -619,7 +619,8 @@
     var seek = $('#seek');
     var tCur = $('#tCur'), tDur = $('#tDur');
     var err = $('#playerErr');
-    var ready = false, broken = false, dragging = false, tried = false;
+    var ready = false, broken = false, dragging = false, tried = false, armed = false;
+    var srcPath = '';
 
     function fmt(t) {
       if (!isFinite(t) || t < 0) t = 0;
@@ -649,7 +650,16 @@
       if (isFinite(a.duration) && a.duration > 0) { a.currentTime = p * a.duration; paint(); }
     }
 
+    /* the file is only requested once she actually reaches the song —
+       keeps the console clean on load while the mp3 is still missing */
+    function arm() {
+      if (armed || !srcPath) return;
+      armed = true;
+      a.src = srcPath;
+    }
+
     function toggle() {
+      arm();
       if (broken) return;
       if (a.paused) {
         var pr = a.play();
@@ -665,8 +675,7 @@
 
     return {
       init: function () {
-        var src = (C.song && C.song.file) || '';
-        a.src = src;
+        srcPath = (C.song && C.song.file) || '';
 
         a.addEventListener('loadedmetadata', function () { ready = true; tDur.textContent = fmt(a.duration); });
         a.addEventListener('timeupdate', function () { if (!dragging) paint(); });
@@ -677,7 +686,8 @@
           a.currentTime = 0; paint();
         });
         a.addEventListener('error', function () {
-          fail('The song file isn\'t here yet.<br>Drop it in as <code>' + esc(src) + '</code>');
+          if (!armed) return;                     // no source set yet — nothing to report
+          fail('The song file isn\'t here yet.<br>Drop it in as <code>' + esc(srcPath) + '</code>');
         });
 
         btn.addEventListener('click', toggle);
@@ -701,6 +711,7 @@
       reached: function () {
         if (tried || broken) return;
         tried = true;
+        arm();
         if (C.song && C.song.autoPlayWhenReached) {
           var pr = a.play();
           if (pr && pr.catch) pr.catch(function () { /* she'll press play — that's fine */ });
