@@ -193,8 +193,26 @@ var CONFIG = {
      Using .m4a instead? Just change "file" below - nothing else:
          file: "assets/voice.m4a"
      Until the file exists the card stays, calm and unbroken, and simply
-     says the recording is still coming.                                */
+     says the recording is still coming.
+
+     IMPORTANT - THE SURPRISE:
+     She does NOT see that this is a recording. She first sees a sealed
+     card and has to scratch it away with her finger. Only once the cover
+     is gone do the Tamil lines, the heading and the play button appear.
+     So keep "surprise" below free of any hint about audio.             */
   voice: {
+
+    /* the sealed cover she scratches - say nothing about a recording */
+    surprise: {
+      coverTitle:  "A little surprise for you ❤",
+      coverSub:    "There's something waiting underneath…",
+      coverHint:   "scratch with your finger",
+      foundTitle:  "You found it… ❤",
+      foundSub:    "Now, listen.",
+      skipLabel:   "or tap here to open it",
+      threshold:   0.5    // how much must be scratched (0.45 - 0.6)
+    },
+
     ta: [
       "எழுத்துகளால் சொல்லிப் பார்த்தேன்…",
       "கவிதையாய் சொல்லிப் பார்த்தேன்…",

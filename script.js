@@ -594,12 +594,16 @@
     $('#letterSign').innerHTML = esc(L.signOff || '') + '<b>' + esc(C.myName || '') + '</b>';
     renderLines($('#letterTa'), L.ta, { heart: true });
 
-    /* my voice */
+    /* my voice — kept behind the scratch cover until she opens it */
     var V = C.voice || {};
+    var S = V.surprise || {};
     $('#voiceHead').innerHTML = heartify(V.heading || '');
     renderLines($('#voiceTa'), V.ta, { heart: true });
     $('#voiceLabel').textContent = V.label || 'Listen to me';
     $('#voiceLabelTa').textContent = V.labelTa || '';
+    $('#foundTitle').innerHTML = heartify(S.foundTitle || 'You found it… ❤');
+    $('#foundSub').textContent = S.foundSub || 'Now, listen.';
+    $('#scratchSkip').textContent = S.skipLabel || 'or tap here to open it';
 
     /* finale */
     var F = C.finale || {};
@@ -902,15 +906,291 @@
   })();
 
   /* =======================================================
-     7. MY VOICE — one tap, no autoplay, never breaks
+     7a. THE SCRATCH COVER — she has no idea what is under it
+         The cover art AND its words are painted into the canvas,
+         so a finger swipe wipes them away together.
+     ======================================================= */
+  var Scratch = (function () {
+    var wrap   = $('#scratch');
+    var stage  = $('#scratchStage');
+    var cv     = $('#scratchCover');
+    var sparks = $('#scratchSparks');
+    var skip   = $('#scratchSkip');
+
+    var ctx = null, dpr = 1, W = 0, H = 0;
+    var painted = false, drawing = false, opened = false, touched = false;
+    var lastX = 0, lastY = 0, lastSpark = 0, lastCheck = 0;
+    var onDone = null;
+    var GLYPHS = ['✨', '💖', '❤', '💫', '✦'];
+
+    var conf = (C.voice && C.voice.surprise) || {};
+    var NEED = Math.min(0.75, Math.max(0.3, +conf.threshold || 0.5));
+
+    /* tiny deterministic random, so the foil looks the same every paint */
+    function rnd(seed) {
+      var s = seed;
+      return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+    }
+
+    function roundRect(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    function wrap2(c, text, maxW) {
+      var words = String(text).split(' ');
+      var lines = [], line = '';
+      for (var i = 0; i < words.length; i++) {
+        var test = line ? line + ' ' + words[i] : words[i];
+        if (c.measureText(test).width > maxW && line) { lines.push(line); line = words[i]; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function paint() {
+      W = stage.clientWidth;
+      H = stage.clientHeight;
+      if (!W || !H) return false;
+
+      dpr = Math.min(window.devicePixelRatio || 1, 3);
+      cv.width  = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      cv.style.width  = W + 'px';
+      cv.style.height = H + 'px';
+
+      ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, W, H);
+
+      /* foil */
+      var g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, '#ff6aa6');
+      g.addColorStop(0.45, '#c05cd0');
+      g.addColorStop(1, '#7f5cff');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      /* diagonal sheen */
+      var s = ctx.createLinearGradient(0, H, W, 0);
+      s.addColorStop(0.00, 'rgba(255,255,255,0)');
+      s.addColorStop(0.42, 'rgba(255,255,255,.22)');
+      s.addColorStop(0.56, 'rgba(255,255,255,.05)');
+      s.addColorStop(1.00, 'rgba(255,255,255,0)');
+      ctx.fillStyle = s;
+      ctx.fillRect(0, 0, W, H);
+
+      /* scattered little hearts, like a wrapping paper */
+      var r = rnd(20240214);
+      ctx.save();
+      for (var i = 0; i < 26; i++) {
+        var x = r() * W, y = r() * H, sz = 9 + r() * 12;
+        ctx.globalAlpha = 0.10 + r() * 0.14;
+        ctx.font = sz + 'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(r() > 0.5 ? '❤' : '✦', x, y);
+      }
+      ctx.restore();
+
+      /* inner hairline frame */
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, 13, 13, W - 26, H - 26, 18);
+      ctx.stroke();
+
+      /* --- the words on the cover --- */
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var maxW = W - 56;
+      var cy = H * 0.30;
+
+      ctx.font = Math.round(Math.min(34, W * 0.10)) + 'px "Segoe UI Emoji","Apple Color Emoji",serif';
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = '#fff';
+      ctx.fillText('✧', W / 2, cy - 4);
+      ctx.globalAlpha = 1;
+
+      var tSize = Math.round(Math.max(21, Math.min(30, W * 0.083)));
+      ctx.font = 'italic 300 ' + tSize + 'px "Cormorant Garamond", Georgia, serif';
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = 'rgba(0,0,0,.28)';
+      ctx.shadowBlur = 12;
+      var title = wrap2(ctx, conf.coverTitle || 'A little surprise for you ❤', maxW);
+      var ty = H * 0.48 - (title.length - 1) * tSize * 0.66;
+      title.forEach(function (ln, i) { ctx.fillText(ln, W / 2, ty + i * tSize * 1.32); });
+
+      var sSize = Math.round(Math.max(12.5, Math.min(15.5, W * 0.043)));
+      ctx.font = '400 ' + sSize + 'px "Manrope", system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.88)';
+      ctx.shadowBlur = 8;
+      var sub = wrap2(ctx, conf.coverSub || 'There’s something waiting underneath…', maxW);
+      var sy = ty + title.length * tSize * 1.32 + sSize * 1.4;
+      sub.forEach(function (ln, i) { ctx.fillText(ln, W / 2, sy + i * sSize * 1.6); });
+
+      ctx.shadowBlur = 0;
+      ctx.font = '500 11px "Manrope", system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.70)';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '2.6px';
+      ctx.fillText(String(conf.coverHint || 'scratch with your finger').toUpperCase(), W / 2, H - 30);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+
+      painted = true;
+      return true;
+    }
+
+    function pos(e) {
+      var r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function erase(x, y) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(34, Math.min(52, W * 0.14));
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      lastX = x; lastY = y;
+    }
+
+    function sparkle(x, y) {
+      if (REDUCED) return;
+      var now = Date.now();
+      if (now - lastSpark < 70) return;
+      lastSpark = now;
+      var el = document.createElement('span');
+      el.className = 'spark';
+      el.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      el.style.left = (x + (Math.random() * 20 - 10)) + 'px';
+      el.style.top  = (y + (Math.random() * 16 - 8)) + 'px';
+      el.style.fontSize = (11 + Math.random() * 9).toFixed(0) + 'px';
+      sparks.appendChild(el);
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 950);
+    }
+
+    /* how much of the cover is gone (sampled, not pixel-perfect) */
+    function cleared() {
+      var d;
+      try { d = ctx.getImageData(0, 0, cv.width, cv.height).data; }
+      catch (e) { return 0; }
+      var step = 4 * 8, total = 0, gone = 0;
+      for (var i = 3; i < d.length; i += step) {
+        total++;
+        if (d[i] < 40) gone++;
+      }
+      return total ? gone / total : 0;
+    }
+
+    function open() {
+      if (opened) return;
+      opened = true;
+      wrap.classList.add('is-open');
+      cv.setAttribute('aria-hidden', 'true');
+      $('#scratchUnder').removeAttribute('aria-hidden');
+      skip.hidden = true;
+      if (onDone) onDone();
+    }
+
+    function down(e) {
+      if (opened || !painted) return;
+      drawing = true;
+      touched = true;
+      var p = pos(e);
+      lastX = p.x; lastY = p.y;
+      erase(p.x, p.y);
+      sparkle(p.x, p.y);
+      try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    }
+
+    function move(e) {
+      if (!drawing || opened) return;
+      var p = pos(e);
+      erase(p.x, p.y);
+      sparkle(p.x, p.y);
+      var now = Date.now();
+      if (now - lastCheck > 160) {
+        lastCheck = now;
+        if (cleared() >= NEED) open();
+      }
+      e.preventDefault();
+    }
+
+    function up() {
+      if (!drawing) return;
+      drawing = false;
+      if (!opened && cleared() >= NEED) open();
+    }
+
+    return {
+      init: function (done) {
+        onDone = done;
+        if (!cv || !stage) { if (done) done(); return; }
+
+        var go = function () { paint(); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(go, go);
+        else go();
+        /* a second pass once layout/fonts have certainly settled */
+        setTimeout(function () { if (!touched && !opened) paint(); }, 900);
+
+        cv.addEventListener('pointerdown', down);
+        cv.addEventListener('pointermove', move);
+        cv.addEventListener('pointerup', up);
+        cv.addEventListener('pointercancel', up);
+
+        skip.addEventListener('click', open);
+
+        /* the cover has to survive a rotation, a late font, or a browser
+           that only gives the section its real size once it scrolls near.
+           Repaint whenever the box changes — but never once she has
+           started scratching, or her progress would come back. */
+        var refresh = function () {
+          if (opened || touched) return;
+          if (stage.clientWidth === W && stage.clientHeight === H && painted) return;
+          paint();
+        };
+        if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage);
+        window.addEventListener('resize', refresh);
+        window.addEventListener('orientationchange', function () { setTimeout(refresh, 250); });
+      },
+      /* she has arrived at the section: make sure the cover really drew */
+      reached: function () {
+        if (!painted || cv.clientWidth !== W) paint();
+        if (opened) return;
+        setTimeout(function () {
+          if (!opened && !touched) skip.hidden = false;
+        }, 15000);
+      },
+      isOpen: function () { return opened; }
+    };
+  })();
+
+  /* =======================================================
+     7b. MY VOICE — appears only once the cover is gone.
+         One tap, no autoplay, never breaks.
      ======================================================= */
   var Voice = (function () {
     var a = $('#voiceAudio');
     var card = $('#vnote');
     var btn = $('#voiceBtn');
     var note = $('#voiceNote');
+    var box = $('#voiceReveal');
+    var hearts = $('#voiceHearts');
     var srcPath = '';
-    var armed = false, missing = false;
+    var armed = false, missing = false, retried = false, heartTimer = 0;
 
     /* the file is only requested once she reaches this part of the story,
        so a missing recording never shows up as an error earlier on */
@@ -932,6 +1212,16 @@
 
     function toggle() {
       arm();
+      /* one quiet second chance — a single flaky load shouldn't cost her the
+         recording. After that the card just keeps its gentle message. */
+      if (missing && !retried && srcPath) {
+        retried = true;
+        missing = false;
+        card.classList.remove('is-empty');
+        card.classList.add('is-idle');
+        note.hidden = true;
+        try { a.src = srcPath + (srcPath.indexOf('?') < 0 ? '?' : '&') + 'r=1'; a.load(); } catch (e) {}
+      }
       if (missing) return;
       if (a.paused) {
         var pr = a.play();
@@ -941,9 +1231,42 @@
       }
     }
 
+    /* soft hearts drifting up while she listens */
+    function heartsOn() {
+      if (REDUCED || heartTimer) return;
+      heartTimer = setInterval(function () {
+        var el = document.createElement('span');
+        el.className = 'vheart';
+        el.textContent = Math.random() > .5 ? '❤' : '💗';
+        el.style.left = (12 + Math.random() * 76) + '%';
+        el.style.setProperty('--dx', (Math.random() * 44 - 22).toFixed(0) + 'px');
+        el.style.fontSize = (12 + Math.random() * 8).toFixed(0) + 'px';
+        el.style.animationDuration = (3.6 + Math.random() * 1.6).toFixed(2) + 's';
+        hearts.appendChild(el);
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5400);
+      }, 760);
+    }
+    function heartsOff() {
+      if (heartTimer) { clearInterval(heartTimer); heartTimer = 0; }
+    }
+
+    /* the cover has been scratched away — now, and only now, the
+       recording gets to exist on the page */
+    function reveal() {
+      if (!box.hidden) return;
+      box.hidden = false;
+      void box.offsetWidth;                 // let the browser see it before we animate
+      box.classList.add('is-open');
+      arm();                                 // a missing file resolves quietly, before she taps
+      setTimeout(function () {
+        box.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' });
+      }, 700);
+    }
+
     return {
       init: function () {
         srcPath = (C.voice && C.voice.file) || '';
+        Scratch.init(reveal);
         if (!srcPath) { markMissing(); return; }
 
         card.classList.add('is-idle');
@@ -951,15 +1274,20 @@
         a.addEventListener('play', function () {
           card.classList.add('is-speaking');
           card.classList.remove('is-idle');
+          btn.setAttribute('aria-label', 'Pause the recording');
+          heartsOn();
         });
         a.addEventListener('pause', function () {
           card.classList.remove('is-speaking');
           if (!missing) card.classList.add('is-idle');
+          btn.setAttribute('aria-label', 'Play the recording');
+          heartsOff();
         });
         a.addEventListener('ended', function () {
           card.classList.remove('is-speaking');
           card.classList.add('is-idle');
           a.currentTime = 0;
+          heartsOff();
         });
         a.addEventListener('error', function () {
           if (!armed) return;               // nothing requested yet
@@ -970,7 +1298,7 @@
       },
       /* shares the balloon tap so mobile browsers trust the later play() */
       unlock: function () { try { a.load(); } catch (e) {} },
-      reached: function () { arm(); }
+      reached: function () { Scratch.reached(); }
     };
   })();
 

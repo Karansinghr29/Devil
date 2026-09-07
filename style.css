@@ -817,6 +817,110 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 
 /* =========================================================
+   THE HIDDEN SURPRISE — a sealed card she has to scratch open
+   Nothing here may hint at what is underneath.
+   ========================================================= */
+.scratch{
+  margin:clamp(24px,5vh,44px) auto 0;
+  width:100%;
+  max-width:360px;
+}
+
+.scratch__stage{
+  position:relative;
+  width:100%;
+  height:clamp(258px,44vh,320px);
+  border-radius:26px;
+  overflow:hidden;
+  background:linear-gradient(165deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
+  border:1px solid var(--glass-line);
+  box-shadow:0 22px 58px rgba(0,0,0,.5);
+  isolation:isolate;
+}
+
+/* what is waiting under the cover */
+.scratch__under{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:10px;
+  padding:26px 22px;
+  text-align:center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255,143,195,.16), rgba(255,143,195,0) 62%),
+    linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+}
+.scratch__found{
+  margin:0;
+  font-family:var(--f-display);
+  font-size:clamp(28px,7.6vw,40px);
+  font-weight:300; font-style:italic;
+  line-height:1.24;
+  color:var(--ink);
+  text-shadow:0 0 34px rgba(255,143,195,.28);
+}
+.scratch__foundSub{
+  margin:0;
+  font-family:var(--f-display);
+  font-size:clamp(18px,4.8vw,22px);
+  font-weight:300;
+  letter-spacing:.02em;
+  color:var(--ink-soft, var(--ink));
+  opacity:.85;
+}
+
+/* the cover itself — painted in canvas so the text scratches off too */
+.scratch__cover{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  display:block;
+  cursor:grab;
+  touch-action:none;                 /* so a swipe scratches, not scrolls */
+  -webkit-user-select:none; user-select:none;
+  transition:opacity .85s var(--ease), filter .85s var(--ease);
+}
+.scratch__cover:active{ cursor:grabbing; }
+.scratch.is-open .scratch__cover{
+  opacity:0; filter:blur(6px); pointer-events:none;
+}
+.scratch.is-open .scratch__stage{
+  box-shadow:0 22px 64px rgba(255,95,158,.22), 0 22px 58px rgba(0,0,0,.5);
+}
+
+/* sparkles + hearts that follow her finger */
+.scratch__sparks{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.spark{
+  position:absolute;
+  font-size:14px; line-height:1;
+  opacity:0;
+  will-change:transform,opacity;
+  animation:sparkUp 900ms var(--ease) forwards;
+}
+@keyframes sparkUp{
+  0%   { opacity:0;  transform:translate3d(-50%,-50%,0) scale(.4) rotate(0deg); }
+  22%  { opacity:1;  transform:translate3d(-50%,-58%,0) scale(1)  rotate(6deg); }
+  100% { opacity:0;  transform:translate3d(-50%,-150%,0) scale(.7) rotate(-10deg); }
+}
+
+.scratch__skip{
+  display:block;
+  margin:16px auto 0;
+  font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-faint);
+  opacity:.65;
+  transition:opacity .4s, color .3s;
+}
+.scratch__skip[hidden]{ display:none; }
+.scratch__skip:hover, .scratch__skip:focus-visible{ opacity:1; color:var(--ink); }
+
+/* everything that gives the secret away lives in here */
+.vreveal{
+  opacity:0; transform:translate3d(0,16px,0);
+  transition:opacity 1s var(--ease), transform 1s var(--ease);
+}
+.vreveal.is-open{ opacity:1; transform:none; }
+
+/* =========================================================
    MY VOICE — deliberately not a normal audio player
    ========================================================= */
 .voice-head{
@@ -831,6 +935,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 
 .vnote{
+  position:relative;
   margin:clamp(30px,6vh,48px) auto 0;
   max-width:340px;
   padding:30px 24px 26px;
@@ -858,9 +963,10 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 .vnote__btn:active{ transform:scale(.94); }
 .vnote__ico{ display:block; line-height:0; }
 .vnote__ico .ic{ width:36px; height:36px; fill:#fff; }
-.vnote__ico .ic--stop{ display:none; }
-.is-speaking .vnote__ico .ic--mic{ display:none; }
-.is-speaking .vnote__ico .ic--stop{ display:block; }
+.vnote__ico .ic--play{ margin-left:3px; }        /* optically centred triangle */
+.vnote__ico .ic--pause{ display:none; }
+.is-speaking .vnote__ico .ic--play{ display:none; }
+.is-speaking .vnote__ico .ic--pause{ display:block; }
 
 /* a slow ring, like the words are still travelling */
 .vnote__ring{
@@ -914,6 +1020,41 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 .vnote.is-empty .vnote__btn{ filter:grayscale(.45) brightness(.72); animation:none; }
 .vnote.is-empty .vnote__wave{ opacity:.12; }
+.vnote.is-empty .vnote__ring{ animation:none; opacity:0; }
+
+/* a slow heartbeat around the card while she's listening */
+.vnote.is-speaking{ animation:vheart 1.9s ease-in-out infinite; }
+@keyframes vheart{
+  0%,100%{ box-shadow:0 22px 58px rgba(0,0,0,.5), 0 0 0 0 rgba(255,95,158,.30); }
+  18%    { box-shadow:0 22px 58px rgba(0,0,0,.5), 0 0 34px 8px rgba(255,95,158,.34); }
+  34%    { box-shadow:0 22px 58px rgba(0,0,0,.5), 0 0 18px 2px rgba(255,95,158,.22); }
+  52%    { box-shadow:0 22px 58px rgba(0,0,0,.5), 0 0 40px 10px rgba(255,143,195,.30); }
+}
+
+/* soft hearts drifting up out of the card while the voice plays */
+.vnote__hearts{
+  position:absolute; inset:-10px -6px 0;
+  pointer-events:none; overflow:hidden;
+}
+.vheart{
+  position:absolute; bottom:14%;
+  font-size:15px; line-height:1;
+  opacity:0;
+  will-change:transform,opacity;
+  animation:vfloat 4.2s var(--ease) forwards;
+}
+@keyframes vfloat{
+  0%  { opacity:0; transform:translate3d(0,0,0) scale(.5); }
+  14% { opacity:.85; }
+  70% { opacity:.55; }
+  100%{ opacity:0; transform:translate3d(var(--dx,0px),-190px,0) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .vnote.is-speaking{ animation:none; }
+  .spark, .vheart{ animation-duration:.01ms; display:none; }
+  .scratch__cover, .vreveal{ transition-duration:.01ms; }
+}
 
 /* =========================================================
    THE FINAL WORDS

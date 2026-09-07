@@ -13,6 +13,14 @@ SONG
   song.mp3        <- ALREADY ADDED (Asku Laska)
                      replace this file if you want a different song
 
+YOUR VOICE
+  voice.mp3       <- record yourself saying it, drop it here
+                     (.m4a also fine - set voice.file in config.js)
+  -> this one is hidden behind a scratch card. She scratches the cover
+     off with her finger before the play button ever appears.
+  -> if the file is missing the card still opens and simply says
+     "The recording is still coming." - nothing breaks.
+
 OPTIONAL
   artwork.jpg     (song artwork; set song.artwork in config.js to use it)
 

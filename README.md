@@ -14,6 +14,7 @@ birthday-surprise/
 └── assets/
     ├── photo1.jpg … photo5.jpg
     ├── song.mp3
+    ├── voice.mp3     (your recording — hidden behind the scratch card)
     └── artwork.jpg   (optional)
 ```
 
@@ -22,7 +23,15 @@ birthday-surprise/
 ## The story flow
 
 🎈 balloons → ❤️ *Happy Birthday, My Life* → 📸 our memories → ❤️ the things I never said →
-💌 Tamil poem → 🎵 the song that says it for me → 💌 my letter → ❤️∞ the last words
+💌 Tamil poem → 🎵 the song that says it for me → 💌 my letter →
+🎁 a sealed surprise she has to scratch open → 🎧 my voice → ❤️∞ the last words
+
+The second-to-last section is a **secret**. All she sees is a sealed card
+saying *"A little surprise for you"*. She has to swipe her finger across it
+like a scratch card; only once about half the cover is gone does it open and
+the play button appear. Nothing on the page hints that it is a recording
+until then. Put your file at `assets/voice.mp3` — if it isn't there, the card
+still opens and shows a gentle message instead of an error.
 
 ---
 

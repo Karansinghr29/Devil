@@ -160,30 +160,48 @@
         </article>
       </div>
       <button class="cue" data-next="#sec-voice" aria-label="Continue">
-        <span>hear me say it</span><i class="cue__chev"></i>
+        <span>one last surprise</span><i class="cue__chev"></i>
       </button>
     </section>
 
-    <!-- 7. my voice -->
+    <!-- 7. the hidden surprise — nothing above the cover says what it is -->
     <section class="panel panel--center" id="sec-voice">
       <div class="panel__body">
-        <div class="ta ta--center" id="voiceTa"></div>
-        <h2 class="voice-head reveal-item" data-d="0" id="voiceHead"></h2>
 
-        <div class="vnote reveal-item" data-d="1" id="vnote">
-          <button class="vnote__btn" id="voiceBtn" aria-label="Play the recording">
-            <span class="vnote__ring" aria-hidden="true"></span>
-            <span class="vnote__ico" aria-hidden="true">
-              <svg class="ic ic--mic" viewBox="0 0 24 24"><path d="M12 14.5a3 3 0 0 0 3-3v-5a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3.2a.9.9 0 0 0-1.8 0 3.2 3.2 0 0 1-6.4 0 .9.9 0 0 0-1.8 0 5 5 0 0 0 4.1 4.9v2a.9.9 0 0 0 1.8 0v-2a5 5 0 0 0 4.1-4.9z"/></svg>
-              <svg class="ic ic--stop" viewBox="0 0 24 24"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
-            </span>
-          </button>
-          <div class="vnote__wave" id="voiceWave" aria-hidden="true">
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <div class="scratch reveal-item" data-d="0" id="scratch">
+          <div class="scratch__stage" id="scratchStage">
+            <!-- sits under the cover; only reachable by scratching it away -->
+            <div class="scratch__under" id="scratchUnder" aria-hidden="true">
+              <p class="scratch__found" id="foundTitle"></p>
+              <p class="scratch__foundSub" id="foundSub"></p>
+            </div>
+            <canvas class="scratch__cover" id="scratchCover"></canvas>
+            <div class="scratch__sparks" id="scratchSparks" aria-hidden="true"></div>
           </div>
-          <p class="vnote__label" id="voiceLabel"></p>
-          <p class="vnote__labelTa" id="voiceLabelTa"></p>
-          <p class="vnote__note" id="voiceNote" hidden></p>
+          <button class="scratch__skip" id="scratchSkip" type="button" hidden></button>
+        </div>
+
+        <!-- everything below exists only once the cover is gone -->
+        <div class="vreveal" id="voiceReveal" hidden>
+          <div class="ta ta--center" id="voiceTa"></div>
+          <h2 class="voice-head" id="voiceHead"></h2>
+
+          <div class="vnote" id="vnote">
+            <button class="vnote__btn" id="voiceBtn" aria-label="Play the recording">
+              <span class="vnote__ring" aria-hidden="true"></span>
+              <span class="vnote__ico" aria-hidden="true">
+                <svg class="ic ic--play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z"/></svg>
+                <svg class="ic ic--pause" viewBox="0 0 24 24"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+              </span>
+            </button>
+            <div class="vnote__wave" id="voiceWave" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <p class="vnote__label" id="voiceLabel"></p>
+            <p class="vnote__labelTa" id="voiceLabelTa"></p>
+            <p class="vnote__note" id="voiceNote" hidden></p>
+            <div class="vnote__hearts" id="voiceHearts" aria-hidden="true"></div>
+          </div>
         </div>
       </div>
       <button class="cue" data-next="#sec-final" aria-label="Continue">
