@@ -313,7 +313,8 @@
       ctx.globalAlpha = 1;
     }
 
-    function start() { if (!running) { running = true; last = performance.now(); raf = requestAnimationFrame(tick); } }
+    var held = false;   // paused while the last surprise owns the screen
+    function start() { if (!running && !held) { running = true; last = performance.now(); raf = requestAnimationFrame(tick); } }
     function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = null; }
 
     return {
@@ -333,6 +334,11 @@
       },
       /* the song bloom — called by the player on play / pause */
       setSong: function (on) { songTarget = on ? 1 : 0; },
+      /* freeze the ambient canvas while something else fills the screen */
+      hold: function (on) {
+        held = !!on;
+        if (held) stop(); else if (!document.hidden) start();
+      },
       /* heart shower from a point — used when a balloon pops */
       pop: function (x, y, count) {
         var n = REDUCED ? 6 : (count || (SMALL ? 16 : 24));
@@ -465,7 +471,29 @@
       }, 1400);
     }
 
-    return { init: function () { build(); } };
+    /* back to the very beginning, without reloading the page */
+    function reset() {
+      opened = false;
+      build();
+      [$('#gateEyebrow'), $('#gateHint')].forEach(function (n) {
+        n.style.transition = '';
+        n.style.opacity = '';
+        n.style.animation = '';            // lets the intro animation play again
+      });
+      document.body.classList.add('is-locked');
+      var story = $('#story');
+      story.classList.remove('is-live');
+      story.setAttribute('aria-hidden', 'true');
+      gate.style.display = '';
+      gate.getBoundingClientRect();
+      gate.classList.remove('is-gone');
+      var root = document.documentElement;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo(0, 0);
+      root.style.scrollBehavior = '';
+    }
+
+    return { init: function () { build(); }, reset: reset };
   })();
 
   /* =======================================================
@@ -1303,6 +1331,509 @@
   })();
 
   /* =======================================================
+     8. ONE LAST SURPRISE — a card drops in after the finale;
+        tapping it plays a full-screen heart sequence, the final
+        wish, then hands her back to the balloons.
+     ======================================================= */
+  var LastSurprise = (function () {
+    var S = C.lastSurprise || {};
+    var LINES = (S.lines && S.lines.length) ? S.lines : [
+      'Love you ❤️', 'I’ll be with you.', 'Until my last breath.',
+      'You are my forever.', 'Still you. Always you. ❤️'
+    ];
+
+    var card = null, cardTimer = 0, cardUp = false, everShown = false;
+    var finalSeen = false, endSeen = false;
+    var active = false;
+    var ov = null, cv = null, ctx = null, heartEl = null, wordsEl = null, wishEl = null;
+    var raf = 0, t0 = 0, lastNow = 0, W = 0, H = 0, DPR = 1;
+    var parts = [], sprites = null, timers = [];
+    var spawnAcc = 0, nextBurst = 0, nextBloom = 0, cleared = false;
+
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+    /* ---------- timeline (seconds). Reduced motion gets a calmer, shorter cut ---------- */
+    var TL = REDUCED ? {
+      heart: 0.6, open: 2.6, words: 3.4, wordGap: 2.6, wordLife: 2.4, wordCount: 4,
+      peakA: 5, peakB: 11, dark: 14, wish: 14.6, final: 17, out: 22.5,
+      rate: [[0, 0], [2.6, 0], [2.7, 1.2], [5, 2], [11, 2], [13.4, 0], [15.4, 0], [16, 0.35], [40, 0.35]],
+      speed: [[0, 0.6], [40, 0.6]],
+      alpha: [[0, 1], [12.6, 1], [14, 0], [15.2, 0], [16.4, 0.7], [40, 0.7]]
+    } : {
+      heart: 0.9, open: 3.5, words: 6.6, wordGap: 1.75, wordLife: 2.9, wordCount: 9,
+      peakA: 12, peakB: 19, dark: 25.4, wish: 26.2, final: 28.9, out: 35.2,
+      rate: [[0, 0], [3.4, 0], [3.5, 2.5], [6, 5], [9, 9], [12, 15], [19, 15], [21.5, 6], [23.6, 1.5], [24.6, 0],
+             [26.4, 0], [27.2, 1.1], [60, 1.1]],
+      speed: [[0, 1], [19, 1], [24, 0.42], [26, 0.42], [27, 0.5], [60, 0.5]],
+      alpha: [[0, 1], [21.5, 1], [25.2, 0], [26.3, 0], [27.8, 0.85], [60, 0.85]]
+    };
+
+    function curve(k, t) {
+      if (t <= k[0][0]) return k[0][1];
+      for (var i = 1; i < k.length; i++) {
+        if (t <= k[i][0]) {
+          var a = k[i - 1], b = k[i];
+          return a[1] + (b[1] - a[1]) * ((t - a[0]) / (b[0] - a[0]));
+        }
+      }
+      return k[k.length - 1][1];
+    }
+
+    /* ---------- sprites: drawn once, blitted every frame ---------- */
+    function mk(size, paint) {
+      var c = document.createElement('canvas');
+      c.width = c.height = size;
+      paint(c.getContext('2d'), size);
+      return c;
+    }
+    function emoji(ch) {
+      return mk(96, function (g, s) {
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.font = '72px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        g.fillText(ch, s / 2, s / 2 + 4);
+      });
+    }
+    /* a real colour emoji has saturated pixels; a missing-glyph box doesn't */
+    function colourful(c) {
+      var d;
+      try { d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; }
+      catch (e) { return true; }
+      for (var i = 0; i < d.length; i += 4 * 3) {
+        if (d[i + 3] > 120 && Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]) > 60) return true;
+      }
+      return false;
+    }
+    function glow(rgb) {
+      return mk(64, function (g, s) {
+        var r = s / 2, grd = g.createRadialGradient(r, r, 0, r, r, r);
+        grd.addColorStop(0, 'rgba(' + rgb + ',1)');
+        grd.addColorStop(0.3, 'rgba(' + rgb + ',.5)');
+        grd.addColorStop(1, 'rgba(' + rgb + ',0)');
+        g.fillStyle = grd; g.fillRect(0, 0, s, s);
+      });
+    }
+    function vheart(fill, shine) {
+      return mk(128, function (g, s) {
+        g.translate(s / 2, s / 2 + 6);
+        g.scale(s / 40, s / 40);
+        g.shadowColor = shine; g.shadowBlur = 9;
+        g.fillStyle = fill;
+        g.beginPath();
+        g.moveTo(0, 10);
+        g.bezierCurveTo(-14, -2, -10, -14, 0, -7);
+        g.bezierCurveTo(10, -14, 14, -2, 0, 10);
+        g.closePath(); g.fill();
+      });
+    }
+
+    function buildSprites() {
+      if (sprites) return;
+      /* weight: 💙 is the identity, everything else is mixed through it */
+      var set = [
+        ['💙', 7, 'b'], ['🩵', 2.4, 'b'], ['❤️', 2, 'p'], ['💜', 1.4, 'v'], ['🩷', 1.4, 'p'],
+        ['💕', 1, 'p'], ['💞', 1, 'p'], ['💓', 0.9, 'p'], ['💗', 1, 'p'], ['💖', 1.1, 'p'],
+        ['💘', 0.7, 'p'], ['💝', 0.6, 'p'], ['💟', 0.5, 'v'], ['😘', 0.45, 'p'], ['🥰', 0.45, 'p'],
+        ['💋', 0.8, 'p'], ['✨', 1.3, 'w']
+      ];
+      sprites = { list: [], total: 0 };
+      set.forEach(function (s) {
+        var img = emoji(s[0]);
+        if (!colourful(img)) return;           // older phones draw 🩵 / 🩷 as an empty box
+        sprites.list.push({ img: img, w: s[1], tone: s[2] });
+        sprites.total += s[1];
+      });
+      sprites.glow = { b: glow('90,160,255'), p: glow('255,110,170'), v: glow('180,130,255'), w: glow('255,240,250') };
+      sprites.dot = { b: glow('200,228,255'), w: glow('255,246,252'), p: glow('255,200,230') };
+      sprites.blue = vheart('rgba(110,172,255,.95)', 'rgba(70,140,255,1)');
+      sprites.sky = vheart('rgba(178,218,255,.9)', 'rgba(120,185,255,.9)');
+      sprites.rose = vheart('rgba(255,120,175,.92)', 'rgba(255,90,155,.9)');
+      /* no colour emoji at all: drawn hearts carry the whole scene */
+      if (!sprites.list.length) {
+        sprites.list = [{ img: sprites.blue, w: 5, tone: 'b' }, { img: sprites.sky, w: 2, tone: 'b' },
+                        { img: sprites.rose, w: 3, tone: 'p' }];
+        sprites.total = 10;
+      }
+      sprites.blues = sprites.list.filter(function (s) { return s.tone === 'b'; });
+    }
+
+    function pick(blueBias) {
+      if (blueBias && sprites.blues.length && Math.random() < blueBias) {
+        return sprites.blues[Math.random() > 0.3 ? 0 : (Math.random() * sprites.blues.length) | 0];
+      }
+      var r = Math.random() * sprites.total;
+      for (var i = 0; i < sprites.list.length; i++) {
+        r -= sprites.list[i].w;
+        if (r <= 0) return sprites.list[i];
+      }
+      return sprites.list[0];
+    }
+
+    /* ---------- particles ---------- */
+    function cap() { return REDUCED ? 16 : (SMALL ? 120 : 180); }
+
+    function push(p) {
+      if (parts.length >= cap()) return;
+      p.age = 0;
+      p.ph = p.ph || rnd(0, 6.28);
+      parts.push(p);
+    }
+
+    function spawn() {
+      var r = Math.random();
+      if (!REDUCED && r < 0.2) {                       // tiny glowing particles
+        var tone = ['b', 'w', 'p'][(Math.random() * 3) | 0];
+        push({ kind: 'dot', spr: sprites.dot[tone], x: rnd(0, W), y: rnd(H * 0.05, H), vx: 0, vy: -rnd(6, 26),
+               sz: rnd(3, 9), rot: 0, vr: 0, al: rnd(0.5, 1), sway: rnd(4, 14), life: rnd(1.4, 3.2), twinkle: true });
+        return;
+      }
+      if (!REDUCED && r < 0.3) {                       // drifts in from an edge
+        var left = Math.random() > 0.5, sp = pick(0.3);
+        push({ kind: 'side', spr: sp.img, tone: sp.tone, x: left ? -40 : W + 40, y: rnd(H * 0.2, H * 0.95),
+               vx: (left ? 1 : -1) * rnd(26, 70), vy: -rnd(10, 34), sz: rnd(16, 34), rot: rnd(-0.3, 0.3),
+               vr: rnd(-0.5, 0.5), al: rnd(0.5, 0.9), sway: rnd(4, 12), life: rnd(7, 11),
+               halo: Math.random() > 0.7 });
+        return;
+      }
+      if (!REDUCED && r < 0.37) {                      // soft drawn heart, glowing, slower
+        push({ kind: 'rise', spr: Math.random() > 0.3 ? (Math.random() > 0.4 ? sprites.blue : sprites.sky) : sprites.rose,
+               x: rnd(0, W), y: H + 60, vx: 0, vy: -rnd(28, 60), sz: rnd(26, 58), rot: rnd(-0.25, 0.25),
+               vr: rnd(-0.2, 0.2), al: rnd(0.3, 0.6), sway: rnd(10, 30), life: 30 });
+        return;
+      }
+      /* the main body — emoji hearts rising at different depths */
+      var d = Math.pow(Math.random(), 1.5);             // more far-away ones than close ones
+      var s = pick(0.12);
+      var big = !REDUCED && Math.random() < 0.05;
+      var p = {
+        kind: 'rise', spr: s.img, tone: s.tone,
+        x: rnd(-10, W + 10), y: H + 50, vx: 0,
+        vy: -(REDUCED ? rnd(24, 40) : (38 + d * 120) * rnd(0.8, 1.2)),
+        sz: big ? rnd(62, 88) : (13 + d * 40) * rnd(0.85, 1.15),
+        rot: rnd(-0.35, 0.35),
+        vr: REDUCED ? 0 : (Math.random() > 0.55 ? rnd(-0.9, 0.9) : 0),
+        al: REDUCED ? 0.8 : 0.32 + d * 0.62,
+        sway: rnd(8, 36) * (0.5 + d),
+        life: 30,
+        halo: !REDUCED && (big || Math.random() < 0.22)
+      };
+      /* some don't make it off the top — they softly burst mid-air */
+      if (!REDUCED && Math.random() < 0.16) { p.pop = true; p.life = rnd(0.35, 0.8) * (H + 60) / -p.vy; }
+      push(p);
+    }
+
+    function burst(x, y, n, blue) {
+      if (REDUCED) return;
+      for (var i = 0; i < n; i++) {
+        var a = Math.random() * 6.2832, v = rnd(70, 280), s = pick(blue ? 0.7 : 0.25);
+        push({ kind: 'burst', spr: Math.random() > 0.8 ? sprites.dot.w : s.img, tone: s.tone, x: x, y: y,
+               vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, sz: rnd(10, 30), rot: rnd(-0.5, 0.5),
+               vr: rnd(-1.6, 1.6), al: rnd(0.7, 1), sway: 0, life: rnd(1.4, 2.6) });
+      }
+    }
+
+    function bloom() {
+      if (REDUCED) return;
+      push({ kind: 'bloom', spr: Math.random() > 0.3 ? sprites.blue : sprites.rose, x: rnd(W * 0.15, W * 0.85),
+             y: rnd(H * 0.2, H * 0.8), vx: 0, vy: -rnd(4, 12), sz: rnd(110, Math.min(220, W * 0.6)), rot: rnd(-0.2, 0.2),
+             vr: 0, al: rnd(0.16, 0.26), sway: 6, life: rnd(3.2, 4.4) });
+    }
+
+    function frame(now) {
+      if (!active || !ctx) return;          // a stray frame after the sequence ended
+      raf = requestAnimationFrame(frame);
+      var dt = Math.min((now - lastNow) / 1000, 0.05);
+      lastNow = now;
+      var t = (now - t0) / 1000;
+
+      var rate = curve(TL.rate, t) * (SMALL ? 1 : 1.5);
+      var speed = curve(TL.speed, t);
+      var fade = curve(TL.alpha, t);
+
+      /* the screen is black again before the wish: start the last hearts fresh */
+      if (!cleared && t > TL.dark) { cleared = true; parts.length = 0; }
+
+      spawnAcc += rate * dt;
+      while (spawnAcc >= 1) { spawnAcc -= 1; spawn(); }
+
+      if (!REDUCED && t > TL.peakA - 3 && t < TL.peakB + 1 && t > nextBurst) {
+        nextBurst = t + rnd(1.1, 2.3);
+        burst(rnd(W * 0.15, W * 0.85), rnd(H * 0.2, H * 0.75), SMALL ? 14 : 20, Math.random() > 0.4);
+      }
+      if (!REDUCED && t > TL.words && t < TL.peakB + 2 && t > nextBloom) {
+        nextBloom = t + rnd(2.2, 3.6);
+        bloom();
+      }
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+
+      for (var i = parts.length - 1; i >= 0; i--) {
+        var p = parts[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          if (p.pop) burstSmall(p);
+          parts.splice(i, 1);
+          continue;
+        }
+        p.ph += dt * 1.1;
+        if (p.kind === 'burst') {
+          var drag = Math.exp(-2.2 * dt);
+          p.vx *= drag; p.vy = p.vy * drag - 14 * dt;
+        }
+        p.x += (p.vx + Math.cos(p.ph) * p.sway) * dt * speed;
+        p.y += p.vy * dt * speed;
+        p.rot += p.vr * dt * speed;
+        if (p.y < -p.sz * 1.5 || p.x < -140 || p.x > W + 140) { parts.splice(i, 1); continue; }
+
+        /* envelope: ease in, then out — pops swell as they go */
+        var k = p.age / p.life, a = p.al, sz = p.sz;
+        if (p.kind === 'bloom') { a *= Math.sin(Math.PI * k); sz *= 0.8 + 0.3 * k; }
+        else if (p.twinkle) a *= Math.sin(Math.PI * k) * (0.6 + 0.4 * Math.sin(p.ph * 5));
+        else if (p.kind === 'burst') { a *= 1 - k * k; sz *= 1 - 0.4 * k; }
+        else {
+          a *= Math.min(1, p.age / 0.6);
+          if (p.pop && k > 0.78) { var q = (k - 0.78) / 0.22; a *= 1 - q; sz *= 1 + 0.6 * q; }
+          else if (k > 0.88) a *= (1 - k) / 0.12;
+        }
+        a *= fade;
+        if (a <= 0.01) continue;
+
+        if (p.halo && sprites.glow[p.tone]) {
+          ctx.globalAlpha = a * 0.34;
+          var gz = sz * 2.3;
+          ctx.setTransform(DPR, 0, 0, DPR, DPR * p.x, DPR * p.y);
+          ctx.drawImage(sprites.glow[p.tone], -gz / 2, -gz / 2, gz, gz);
+        }
+        ctx.globalAlpha = a;
+        var c = Math.cos(p.rot) * DPR, s = Math.sin(p.rot) * DPR;
+        ctx.setTransform(c, s, -s, c, DPR * p.x, DPR * p.y);
+        ctx.drawImage(p.spr, -sz / 2, -sz / 2, sz, sz);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function burstSmall(p) {
+      for (var i = 0; i < 5; i++) {
+        var a = Math.random() * 6.2832, v = rnd(30, 90);
+        push({ kind: 'burst', spr: i < 2 ? p.spr : sprites.dot.w, tone: p.tone, x: p.x, y: p.y,
+               vx: Math.cos(a) * v, vy: Math.sin(a) * v, sz: i < 2 ? p.sz * 0.45 : rnd(3, 7),
+               rot: 0, vr: rnd(-1, 1), al: p.al * 0.8, sway: 0, life: rnd(0.7, 1.2) });
+      }
+    }
+
+    function resize() {
+      if (!cv) return;
+      DPR = Math.min(window.devicePixelRatio || 1, SMALL ? 1.6 : 1.5);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    }
+
+    /* ---------- the words ---------- */
+    var SLOTS = [14, 24, 34, 64, 74, 84];
+
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = (Math.random() * (i + 1)) | 0, x = a[i]; a[i] = a[j]; a[j] = x;
+      }
+      return a;
+    }
+
+    function chooseLines(n) {
+      var first = LINES[0], lastL = LINES[LINES.length - 1];
+      var mid = shuffle(LINES.slice(1, -1)).slice(0, Math.max(0, n - 2));
+      return LINES.length > 2 ? [first].concat(mid, [lastL]) : LINES.slice(0, n);
+    }
+
+    function scheduleWords() {
+      var lines = chooseLines(TL.wordCount);
+      var recent = [];
+      lines.forEach(function (text, i) {
+        later(function () {
+          var slot;
+          do { slot = (Math.random() * SLOTS.length) | 0; } while (recent.indexOf(slot) >= 0);
+          recent.push(slot); if (recent.length > 2) recent.shift();
+
+          var el = document.createElement('p');
+          var big = i === 0 || i === lines.length - 1 || (text.length < 22 && Math.random() > 0.5);
+          el.className = 'lsx__word' + (big ? ' lsx__word--big' : '') + (Math.random() > 0.5 ? ' lsx__word--blue' : '');
+          el.textContent = text;
+          el.style.top = SLOTS[slot] + '%';
+          el.style.setProperty('--dx', rnd(-9, 9).toFixed(1) + 'vw');
+          el.style.setProperty('--life', TL.wordLife + 's');
+          wordsEl.appendChild(el);
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, TL.wordLife * 1000 + 200);
+        }, (TL.words + i * TL.wordGap) * 1000);
+      });
+    }
+
+    function wordsOf(el, text) {
+      el.innerHTML = '';
+      String(text).split(' ').forEach(function (w, i) {
+        var s = document.createElement('span');
+        s.className = 'lsx__w' + (/[❤\uD83C-\uDBFF]/.test(w) && w.replace(/[❤️\uD83C-􏰀-\uDFFF]/g, '') === '' ? ' lsx__w--emo' : '');
+        s.style.setProperty('--i', i);
+        s.textContent = w;
+        el.appendChild(s);
+        el.appendChild(document.createTextNode(' '));
+      });
+    }
+
+    /* ---------- the card ---------- */
+    function buildCard() {
+      card = document.createElement('div');
+      card.className = 'lsx-card';
+      card.hidden = true;
+      card.innerHTML =
+        '<span class="lsx-card__cord" aria-hidden="true"></span>' +
+        '<button class="lsx-card__btn" type="button">' +
+          '<span class="lsx-card__glow" aria-hidden="true"></span>' +
+          '<span class="lsx-card__flap" aria-hidden="true"></span>' +
+          '<span class="lsx-card__seal" aria-hidden="true">💙</span>' +
+          '<span class="lsx-card__title"></span>' +
+          '<span class="lsx-card__hint"><i aria-hidden="true"></i><b></b></span>' +
+        '</button>';
+      $('.lsx-card__title', card).textContent = S.cardTitle || 'One Last Surprise ❤️';
+      $('.lsx-card__hint b', card).textContent = S.cardHint || 'tap to open';
+      $('.lsx-card__btn', card).setAttribute('aria-label', (S.cardTitle || 'One Last Surprise') + ' — tap to open');
+      $('.lsx-card__btn', card).addEventListener('click', play);
+      document.body.appendChild(card);
+    }
+
+    function showCard() {
+      if (cardUp || active) return;
+      cardUp = true; everShown = true;
+      card.classList.remove('is-leaving', 'is-opening');
+      card.hidden = false;
+      void card.offsetWidth;
+      card.classList.add('is-down');
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+    }
+
+    function hideCard(instant) {
+      clearTimeout(cardTimer); cardTimer = 0;
+      if (!cardUp) return;
+      cardUp = false;
+      if (instant) { card.classList.remove('is-down', 'is-leaving', 'is-opening'); card.hidden = true; return; }
+      card.classList.add('is-leaving');
+      setTimeout(function () {
+        if (cardUp) return;
+        card.classList.remove('is-down', 'is-leaving', 'is-opening');
+        card.hidden = true;
+      }, 700);
+    }
+
+    function maybeArm() {
+      if (active || cardUp || cardTimer) return;
+      if (!finalSeen || !endSeen || !$('#story').classList.contains('is-live')) return;
+      /* the first time, let the finale finish playing out before it drops in */
+      cardTimer = setTimeout(function () { cardTimer = 0; showCard(); }, everShown ? 2200 : 7200);
+    }
+
+    function watch() {
+      if (!('IntersectionObserver' in window)) return;
+      new IntersectionObserver(function (ents) {
+        ents.forEach(function (e) {
+          finalSeen = e.isIntersecting;
+          if (!finalSeen) hideCard(false); else maybeArm();
+        });
+      }, { threshold: 0.01 }).observe($('#sec-final'));
+      new IntersectionObserver(function (ents) {
+        ents.forEach(function (e) {
+          endSeen = e.isIntersecting;
+          if (endSeen) maybeArm();
+        });
+      }, { threshold: 0.5 }).observe($('#replay'));
+    }
+
+    /* ---------- the sequence ---------- */
+    function play() {
+      if (active) return;
+      active = true;
+      clearTimeout(cardTimer); cardTimer = 0;
+      card.classList.add('is-opening');
+      if (navigator.vibrate) { try { navigator.vibrate([10, 40, 16]); } catch (e) {} }
+
+      buildSprites();
+      ov = document.createElement('div');
+      ov.className = 'lsx';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.setAttribute('aria-label', S.cardTitle || 'One last surprise');
+      ov.innerHTML =
+        '<canvas class="lsx__cv" aria-hidden="true"></canvas>' +
+        '<div class="lsx__heart" aria-hidden="true"><span>💙</span></div>' +
+        '<div class="lsx__words" aria-live="polite"></div>' +
+        '<div class="lsx__wish"><p class="lsx__wish1"></p><p class="lsx__wish2"></p></div>';
+      document.body.appendChild(ov);
+      cv = $('.lsx__cv', ov); ctx = cv.getContext('2d');
+      heartEl = $('.lsx__heart', ov); wordsEl = $('.lsx__words', ov); wishEl = $('.lsx__wish', ov);
+      wordsOf($('.lsx__wish1', ov), S.wish || 'One last wish… ❤️');
+      wordsOf($('.lsx__wish2', ov), S.final || 'Happy Birthday ❤️');
+      resize();
+      window.addEventListener('resize', resize);
+
+      void ov.offsetWidth;
+      ov.classList.add('is-on');
+      document.documentElement.classList.add('lsx-lock');
+
+      /* once the screen is fully black, stop drawing what's under it */
+      later(function () {
+        hideCard(true);
+        Atmos.hold(true);
+        $('#story').style.visibility = 'hidden';
+      }, 1000);
+
+      later(function () { heartEl.classList.add('is-in'); }, TL.heart * 1000);
+      later(function () {
+        heartEl.classList.add('is-open');
+        burst(W / 2, H / 2, SMALL ? 34 : 46, true);
+      }, TL.open * 1000);
+      later(function () { heartEl.classList.remove('is-in', 'is-open'); }, (TL.open + 2) * 1000);
+      scheduleWords();
+      later(function () { wishEl.classList.add('is-wish'); }, TL.wish * 1000);
+      later(function () { wishEl.classList.add('is-final'); }, TL.final * 1000);
+      later(function () { wishEl.classList.add('is-gone'); }, TL.out * 1000);
+      later(finish, (TL.out + 1.6) * 1000);
+
+      t0 = lastNow = performance.now();
+      spawnAcc = 0; nextBurst = 0; nextBloom = 0; cleared = false; parts.length = 0;
+      raf = requestAnimationFrame(frame);
+    }
+
+    /* back to the balloons, everything reset so it can happen again */
+    function finish() {
+      [$('#audio'), $('#voiceAudio')].forEach(function (a) {
+        try { if (!a.paused) a.pause(); } catch (e) {}
+      });
+      Gate.reset();
+      $('#story').style.visibility = '';
+      Atmos.hold(false);
+      document.documentElement.classList.remove('lsx-lock');
+
+      ov.classList.add('is-leaving');
+      setTimeout(teardown, 1500);
+    }
+
+    function teardown() {
+      timers.forEach(clearTimeout); timers = [];
+      cancelAnimationFrame(raf); raf = 0;
+      window.removeEventListener('resize', resize);
+      parts.length = 0;
+      if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+      ov = cv = ctx = heartEl = wordsEl = wishEl = null;
+      active = false;             // the observers keep finalSeen / endSeen honest
+    }
+
+    return {
+      init: function () {
+        buildCard();
+        watch();
+      }
+    };
+  })();
+
+  /* =======================================================
      boot
      ======================================================= */
   function boot() {
@@ -1313,6 +1844,7 @@
     Audio.init();
     Voice.init();
     Reveal.init();
+    LastSurprise.init();
     /* keep the story pinned at the top while the gate is up */
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);

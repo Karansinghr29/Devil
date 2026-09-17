@@ -250,6 +250,35 @@ var CONFIG = {
     replayLabel: "Live it again"
   },
 
+  /* ---------- 10b. ONE LAST SURPRISE (after the finale) ----------
+     A card slides down once she has reached the very end.
+     Tap it: black screen, one blue heart, then the whole screen
+     fills with hearts and these lines, then the final wish,
+     then everything returns to the balloons.                     */
+  lastSurprise: {
+    cardTitle: "One Last Surprise ❤️",
+    cardHint: "tap to open",
+    lines: [                         // shown one at a time, a random selection
+      "Love you ❤️",
+      "I’ll be with you.",
+      "Until my last breath.",
+      "I saw you… and everything changed.",
+      "You are my favourite part of every day.",
+      "Stay with me.",
+      "Always you. ❤️",
+      "My heart chose you.",
+      "You are my forever.",
+      "With you, everything feels right.",
+      "Every version of my future has you.",
+      "I’ll choose you, again and again.",
+      "Wherever life takes us, I’ll be with you.",
+      "You are my home.",
+      "Still you. Always you. ❤️"
+    ],
+    wish: "One last wish… ❤️",
+    final: "Happy Birthday, My Darlzzzz Queeen ❤️"
+  },
+
   /* ---------- 11. ATMOSPHERE (safe to leave alone) ---------- */
   atmosphere: {
     density: 1,        // 0.5 = calmer, 1 = default, 1.5 = richer

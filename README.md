@@ -24,7 +24,8 @@ birthday-surprise/
 
 🎈 balloons → ❤️ *Happy Birthday, My Life* → 📸 our memories → ❤️ the things I never said →
 💌 Tamil poem → 🎵 the song that says it for me → 💌 my letter →
-🎁 a sealed surprise she has to scratch open → 🎧 my voice → ❤️∞ the last words
+🎁 a sealed surprise she has to scratch open → 🎧 my voice → ❤️∞ the last words →
+💙 one last surprise → back to the balloons
 
 The second-to-last section is a **secret**. All she sees is a sealed card
 saying *"A little surprise for you"*. She has to swipe her finger across it
@@ -32,6 +33,13 @@ like a scratch card; only once about half the cover is gone does it open and
 the play button appear. Nothing on the page hints that it is a recording
 until then. Put your file at `assets/voice.mp3` — if it isn't there, the card
 still opens and shows a gentle message instead of an error.
+
+A few seconds after she reaches the very end, a **"One Last Surprise ❤️"**
+card drops down from the top. Tapping it turns the screen black, a single
+blue heart 💙 appears and bursts into a screen full of hearts with short love
+lines, then *"One last wish…"* and the final birthday message. Afterwards the
+page returns to the balloons on its own (no reload), ready to play again.
+All of its words live in `lastSurprise` in `config.js`.
 
 ---
 
