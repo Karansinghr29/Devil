@@ -1352,29 +1352,29 @@
     var raf = 0, t0 = 0, lastNow = 0, W = 0, H = 0, DPR = 1;
     var parts = [], sprites = null, timers = [];
     var spawnAcc = 0, nextBurst = 0, nextBloom = 0, cleared = false;
-    var bgm = null, bgmTimer = 0;
+    var bgm = null, bgmWarm = null, bgmTimer = 0, bgmIdx = 0, bgmOn = false;
 
     function rnd(a, b) { return a + Math.random() * (b - a); }
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 
     /* ---------- timeline (seconds). Reduced motion gets a calmer, shorter cut ---------- */
     var TL = REDUCED ? {
-      heart: 0.6, open: 2.6, words: 3.4, wordGap: 2.6, wordLife: 2.4, wordCount: 4,
+      heart: 0.4, open: 2.0, words: 2.8, wordGap: 2.6, wordLife: 2.4, wordCount: 4,
       peakA: 5, peakB: 11, dark: 14, wish: 14.6, final: 17, out: 22.5,
-      rate: [[0, 0], [2.6, 0], [2.7, 1.2], [5, 2], [11, 2], [13.4, 0], [15.4, 0], [16, 0.35], [40, 0.35]],
+      rate: [[0, 0], [2.0, 0], [2.1, 1.2], [5, 2], [11, 2], [13.4, 0], [15.4, 0], [16, 0.35], [40, 0.35]],
       speed: [[0, 0.6], [40, 0.6]],
       alpha: [[0, 1], [12.6, 1], [14, 0], [15.2, 0], [16.4, 0.7], [40, 0.7]],
-      vol: [[0, 0], [0.4, 0.15], [2.6, 1], [22.5, 1], [24.1, 0]]
+      vol: [[0, 0], [0.4, 0.15], [2.0, 1], [22.5, 1], [24.1, 0]]
     } : {
-      heart: 0.9, open: 3.5, words: 6.6, wordGap: 1.75, wordLife: 2.9, wordCount: 9,
+      heart: 0.6, open: 2.8, words: 5.9, wordGap: 1.75, wordLife: 2.9, wordCount: 9,
       peakA: 12, peakB: 19, dark: 25.4, wish: 26.2, final: 28.9, out: 35.2,
-      rate: [[0, 0], [3.4, 0], [3.5, 2.5], [6, 5], [9, 9], [12, 15], [19, 15], [21.5, 6], [23.6, 1.5], [24.6, 0],
+      rate: [[0, 0], [2.7, 0], [2.8, 2.5], [6, 5], [9, 9], [12, 15], [19, 15], [21.5, 6], [23.6, 1.5], [24.6, 0],
              [26.4, 0], [27.2, 1.1], [60, 1.1]],
       speed: [[0, 1], [19, 1], [24, 0.42], [26, 0.42], [27, 0.5], [60, 0.5]],
       alpha: [[0, 1], [21.5, 1], [25.2, 0], [26.3, 0], [27.8, 0.85], [60, 0.85]],
       /* music: barely there on the tap, full the moment the heart opens,
          gone with the last wish */
-      vol: [[0, 0], [0.4, 0.15], [3.5, 1], [35.2, 1], [36.8, 0]]
+      vol: [[0, 0], [0.4, 0.15], [2.8, 1], [35.2, 1], [36.8, 0]]
     };
 
     function curve(k, t) {
@@ -1688,18 +1688,45 @@
     }
 
     /* ---------- the music: loaded when the card drops, never played before her tap ---------- */
+    /* first track once, then the next one. One element plays them in turn,
+       so they can never overlap and phones keep trusting her tap. */
+    function bgmList() { return [S.bgm, S.bgmNext].filter(Boolean); }
+
+    function bgmLoad(i) {
+      var list = bgmList();
+      bgmIdx = i;
+      bgm.loop = i === list.length - 1;     // the last one comes round again rather than go silent
+      bgm.src = list[i];
+    }
+
+    function bgmNextTrack() {
+      if (!bgmOn || bgmIdx >= bgmList().length - 1) return;
+      bgmLoad(bgmIdx + 1);
+      var pr = bgm.play();
+      if (pr && pr.catch) pr.catch(function () {});
+    }
+
     function armBgm() {
-      if (bgm || !S.bgm) return;
+      if (bgm || !bgmList().length) return;
       bgm = new window.Audio();
       bgm.preload = 'auto';
-      bgm.loop = true;                      // shorter than the scene? it simply comes round again
       bgm.setAttribute('playsinline', '');
-      bgm.src = S.bgm;
+      bgm.addEventListener('ended', bgmNextTrack);
+      bgm.addEventListener('error', function () { if (bgmIdx === 0) bgmNextTrack(); });
+      bgmLoad(0);
+      /* fetch the next track ahead of time (never played) so the hand-over is seamless */
+      if (bgmList()[1]) {
+        bgmWarm = new window.Audio();
+        bgmWarm.preload = 'auto';
+        bgmWarm.src = bgmList()[1];
+      }
     }
 
     function startBgm() {
       armBgm();
       if (!bgm) return;
+      bgmOn = true;
+      if (bgmIdx !== 0) bgmLoad(0);
       try { bgm.currentTime = 0; } catch (e) {}
       try { bgm.volume = 0; } catch (e) {}  // swelled in below (iOS ignores volume - it just starts)
       var pr = bgm.play();                  // inside her tap, so phones allow it
@@ -1716,8 +1743,11 @@
 
     function stopBgm() {
       clearInterval(bgmTimer); bgmTimer = 0;
+      bgmOn = false;
       if (!bgm) return;
-      try { bgm.pause(); bgm.currentTime = 0; } catch (e) {}
+      try { bgm.pause(); } catch (e) {}
+      if (bgmIdx !== 0) bgmLoad(0);         // back to the first track, from the top
+      try { bgm.currentTime = 0; } catch (e) {}
     }
 
     /* ---------- the card ---------- */
@@ -1769,7 +1799,7 @@
       if (active || cardUp || cardTimer) return;
       if (!finalSeen || !endSeen || !$('#story').classList.contains('is-live')) return;
       /* the first time, let the finale finish playing out before it drops in */
-      cardTimer = setTimeout(function () { cardTimer = 0; showCard(); }, everShown ? 2200 : 7200);
+      cardTimer = setTimeout(function () { cardTimer = 0; showCard(); }, everShown ? 1200 : 2600);
     }
 
     function watch() {

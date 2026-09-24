@@ -1235,7 +1235,7 @@ html.lsx-lock, html.lsx-lock body{ overflow:hidden; overscroll-behavior:none; }
   transform:translate3d(0,calc(-100% - 70px),0);
 }
 .lsx-card[hidden]{ display:none; }
-.lsx-card.is-down{ animation:lsx-pull 1.8s cubic-bezier(.3,.7,.25,1) forwards; }
+.lsx-card.is-down{ animation:lsx-pull 1.4s cubic-bezier(.3,.7,.25,1) forwards; }
 .lsx-card.is-leaving{ animation:lsx-lift .65s var(--ease-soft) forwards; }
 
 .lsx-card__cord{
