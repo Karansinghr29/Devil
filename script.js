@@ -512,7 +512,7 @@
   }
 
   function placeholderHTML(i) {
-    return '<div class="ph"><b>❤</b>your photo<code>assets/photo' + i + '.jpg</code></div>';
+    return '<div class="ph"><b>❤</b>your photo<code>assets/Photo' + i + '.jpg</code></div>';
   }
 
   /* render a list of lines into a container, one <p> each, staggered.

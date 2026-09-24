@@ -45,7 +45,7 @@ var CONFIG = {
   /* ---------- 4. OUR MEMORIES ----------
      HOW TO ADD YOUR PHOTOS:
        1. Put your images inside the  assets/  folder
-       2. Name them photo1.jpg, photo2.jpg ... (or change "src" below)
+       2. Name them Photo1.jpg, Photo2.jpg ... (or change "src" below)
        3. Portrait photos look best on a phone. ~1200px wide is plenty.
      Until a real file exists, a soft placeholder is shown automatically.
      You can have 3, 4, 5 or more - just add/remove items in this list.
@@ -60,11 +60,11 @@ var CONFIG = {
     ],
     subtitle: "I keep going back to the ordinary days.\nNothing happened in them. You were just there.",
     photos: [
-      { src: "assets/photo1.jpg", captionTa: "அன்று உலகம் லேசாக இருந்தது.",        caption: "The day everything felt lighter." },
-      { src: "assets/photo2.jpg", captionTa: "இந்த நிமிடம் மட்டும் மீண்டும் வேண்டும்.", caption: "I still hear this one." },
-      { src: "assets/photo3.jpg", captionTa: "சாதாரண நாள். சாதாரணமில்லை.",          caption: "Nothing special happened. I remember all of it." },
-      { src: "assets/photo4.jpg", captionTa: "எங்கோ ஒரு நாளில்,\nநீ வீடானாய்.",     caption: "Somewhere in between, you became the place I come back to." },
-      { src: "assets/photo5.jpg", captionTa: "மீண்டும் ஒரு முறை என்றால்,\nஇதே தான்.", caption: "And I'd choose this again. Every time." }
+      { src: "assets/Photo1.jpg", captionTa: "அன்று உலகம் லேசாக இருந்தது.",        caption: "The day everything felt lighter." },
+      { src: "assets/Photo2.jpg", captionTa: "இந்த நிமிடம் மட்டும் மீண்டும் வேண்டும்.", caption: "I still hear this one." },
+      { src: "assets/Photo3.jpg", captionTa: "சாதாரண நாள். சாதாரணமில்லை.",          caption: "Nothing special happened. I remember all of it." },
+      { src: "assets/Photo4.jpg", captionTa: "எங்கோ ஒரு நாளில்,\nநீ வீடானாய்.",     caption: "Somewhere in between, you became the place I come back to." },
+      { src: "assets/Photo5.jpg", captionTa: "மீண்டும் ஒரு முறை என்றால்,\nஇதே தான்.", caption: "And I'd choose this again. Every time." }
     ]
   },
 
@@ -189,7 +189,7 @@ var CONFIG = {
   },
 
   /* ---------- 9. MY VOICE ----------
-     Record yourself saying it, save as  assets/voice.mp3  and refresh.
+     Record yourself saying it, save as  assets/Voice.mp3  and refresh.
      Using .m4a instead? Just change "file" below - nothing else:
          file: "assets/voice.m4a"
      Until the file exists the card stays, calm and unbroken, and simply
@@ -230,7 +230,7 @@ var CONFIG = {
     heading: "One last thing…\nThis time, I want you to hear it from me.",
     label: "Listen to me",
     labelTa: "என் குரலில்…",
-    file: "assets/voice.mp3",
+    file: "assets/Voice.mp3",
     missing: "The recording is still coming. ❤"
   },
 
