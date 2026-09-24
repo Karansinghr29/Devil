@@ -1,11 +1,11 @@
 Drop your files in this folder.
 
 PHOTOS
-  photo1.jpg
-  photo2.jpg
-  photo3.jpg
-  photo4.jpg
-  photo5.jpg
+  Photo1.jpg
+  Photo2.jpg
+  Photo3.jpg
+  Photo4.jpg
+  Photo5.jpg
   -> portrait photos look best on a phone, ~1200px wide is plenty.
   -> if a file is missing, the site quietly shows a soft placeholder instead.
 
@@ -14,7 +14,7 @@ SONG
                      replace this file if you want a different song
 
 YOUR VOICE
-  voice.mp3       <- record yourself saying it, drop it here
+  Voice.mp3       <- record yourself saying it, drop it here
                      (.m4a also fine - set voice.file in config.js)
   -> this one is hidden behind a scratch card. She scratches the cover
      off with her finger before the play button ever appears.
