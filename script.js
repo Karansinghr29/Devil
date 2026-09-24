@@ -1352,6 +1352,7 @@
     var raf = 0, t0 = 0, lastNow = 0, W = 0, H = 0, DPR = 1;
     var parts = [], sprites = null, timers = [];
     var spawnAcc = 0, nextBurst = 0, nextBloom = 0, cleared = false;
+    var bgm = null, bgmTimer = 0;
 
     function rnd(a, b) { return a + Math.random() * (b - a); }
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
@@ -1362,14 +1363,18 @@
       peakA: 5, peakB: 11, dark: 14, wish: 14.6, final: 17, out: 22.5,
       rate: [[0, 0], [2.6, 0], [2.7, 1.2], [5, 2], [11, 2], [13.4, 0], [15.4, 0], [16, 0.35], [40, 0.35]],
       speed: [[0, 0.6], [40, 0.6]],
-      alpha: [[0, 1], [12.6, 1], [14, 0], [15.2, 0], [16.4, 0.7], [40, 0.7]]
+      alpha: [[0, 1], [12.6, 1], [14, 0], [15.2, 0], [16.4, 0.7], [40, 0.7]],
+      vol: [[0, 0], [0.4, 0.15], [2.6, 1], [22.5, 1], [24.1, 0]]
     } : {
       heart: 0.9, open: 3.5, words: 6.6, wordGap: 1.75, wordLife: 2.9, wordCount: 9,
       peakA: 12, peakB: 19, dark: 25.4, wish: 26.2, final: 28.9, out: 35.2,
       rate: [[0, 0], [3.4, 0], [3.5, 2.5], [6, 5], [9, 9], [12, 15], [19, 15], [21.5, 6], [23.6, 1.5], [24.6, 0],
              [26.4, 0], [27.2, 1.1], [60, 1.1]],
       speed: [[0, 1], [19, 1], [24, 0.42], [26, 0.42], [27, 0.5], [60, 0.5]],
-      alpha: [[0, 1], [21.5, 1], [25.2, 0], [26.3, 0], [27.8, 0.85], [60, 0.85]]
+      alpha: [[0, 1], [21.5, 1], [25.2, 0], [26.3, 0], [27.8, 0.85], [60, 0.85]],
+      /* music: barely there on the tap, full the moment the heart opens,
+         gone with the last wish */
+      vol: [[0, 0], [0.4, 0.15], [3.5, 1], [35.2, 1], [36.8, 0]]
     };
 
     function curve(k, t) {
@@ -1682,6 +1687,39 @@
       });
     }
 
+    /* ---------- the music: loaded when the card drops, never played before her tap ---------- */
+    function armBgm() {
+      if (bgm || !S.bgm) return;
+      bgm = new window.Audio();
+      bgm.preload = 'auto';
+      bgm.loop = true;                      // shorter than the scene? it simply comes round again
+      bgm.setAttribute('playsinline', '');
+      bgm.src = S.bgm;
+    }
+
+    function startBgm() {
+      armBgm();
+      if (!bgm) return;
+      try { bgm.currentTime = 0; } catch (e) {}
+      try { bgm.volume = 0; } catch (e) {}  // swelled in below (iOS ignores volume - it just starts)
+      var pr = bgm.play();                  // inside her tap, so phones allow it
+      if (pr && pr.catch) pr.catch(function () {});   // no music is fine; the scene still plays
+
+      /* own clock, not the animation frame, so the swell never stalls */
+      var start = performance.now();
+      clearInterval(bgmTimer);
+      bgmTimer = setInterval(function () {
+        var v = curve(TL.vol, (performance.now() - start) / 1000);
+        try { bgm.volume = Math.max(0, Math.min(1, v)); } catch (e) {}
+      }, 60);
+    }
+
+    function stopBgm() {
+      clearInterval(bgmTimer); bgmTimer = 0;
+      if (!bgm) return;
+      try { bgm.pause(); bgm.currentTime = 0; } catch (e) {}
+    }
+
     /* ---------- the card ---------- */
     function buildCard() {
       card = document.createElement('div');
@@ -1706,6 +1744,7 @@
     function showCard() {
       if (cardUp || active) return;
       cardUp = true; everShown = true;
+      armBgm();
       card.classList.remove('is-leaving', 'is-opening');
       card.hidden = false;
       void card.offsetWidth;
@@ -1757,6 +1796,12 @@
       card.classList.add('is-opening');
       if (navigator.vibrate) { try { navigator.vibrate([10, 40, 16]); } catch (e) {} }
 
+      /* this moment has its own music - quiet the song / voice first */
+      [$('#audio'), $('#voiceAudio')].forEach(function (a) {
+        try { if (!a.paused) a.pause(); } catch (e) {}
+      });
+      startBgm();
+
       buildSprites();
       ov = document.createElement('div');
       ov.className = 'lsx';
@@ -1790,6 +1835,7 @@
       later(function () { heartEl.classList.add('is-in'); }, TL.heart * 1000);
       later(function () {
         heartEl.classList.add('is-open');
+        ov.classList.add('is-bloom');
         burst(W / 2, H / 2, SMALL ? 34 : 46, true);
       }, TL.open * 1000);
       later(function () { heartEl.classList.remove('is-in', 'is-open'); }, (TL.open + 2) * 1000);
@@ -1809,6 +1855,7 @@
       [$('#audio'), $('#voiceAudio')].forEach(function (a) {
         try { if (!a.paused) a.pause(); } catch (e) {}
       });
+      stopBgm();
       Gate.reset();
       $('#story').style.visibility = '';
       Atmos.hold(false);

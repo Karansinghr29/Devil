@@ -1359,6 +1359,28 @@ html.lsx-lock, html.lsx-lock body{ overflow:hidden; overscroll-behavior:none; }
 
 .lsx__cv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
 
+/* a touch of cinema: soft vignette, a slow push-in on the hearts,
+   and one gentle wash of blue light as the heart opens with the music */
+.lsx::after{
+  content:""; position:absolute; inset:0; z-index:1;
+  background:radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+  pointer-events:none;
+}
+.lsx::before{
+  content:""; position:absolute; inset:0; z-index:1;
+  background:radial-gradient(42% 34% at 50% 50%, rgba(110,170,255,.32), rgba(110,170,255,0) 70%);
+  opacity:0; transform:scale(.6);
+  pointer-events:none;
+}
+.lsx.is-on .lsx__cv{ animation:lsx-push 7s cubic-bezier(.2,.6,.3,1) both; }
+.lsx.is-bloom::before{ animation:lsx-bloom 2.4s var(--ease) forwards; }
+@keyframes lsx-push{ from{ transform:scale(1.06); } to{ transform:scale(1); } }
+@keyframes lsx-bloom{
+  0%  { opacity:0;   transform:scale(.6); }
+  30% { opacity:1;   transform:scale(1.15); }
+  100%{ opacity:0;   transform:scale(1.8); }
+}
+
 /* the first blue heart */
 .lsx__heart{
   position:absolute; left:50%; top:50%; z-index:2;

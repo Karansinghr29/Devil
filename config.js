@@ -487,7 +487,11 @@ var CONFIG = {
       "Still you. Always you. ❤️"
     ],
     wish: "One last wish… ❤️",
-    final: "Happy Birthday, My Darlzzzz Queeen ❤️"
+    final: "Happy Birthday, My Darlzzzz Queeen ❤️",
+    /* music for this moment only - starts on her tap, swells in as the
+       heart opens, loops if it's shorter than the scene, fades with the
+       final wish. Leave "" for silence. */
+    bgm: "assets/ReelAudio-76796.mp3"
   },
 
   /* ---------- 11. ATMOSPHERE (safe to leave alone) ---------- */
