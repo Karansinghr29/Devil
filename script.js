@@ -604,6 +604,8 @@
     $('#songTitle').textContent = s.title || '';
     $('#songSub').textContent = s.subtitle || '';
     $('#songCredit').textContent = s.credit || '';
+    $('#songSub').hidden = !s.subtitle;
+    $('#songCredit').hidden = !s.credit;
     if (s.artwork) {
       var im = new Image();
       im.onload = function () {
@@ -618,7 +620,8 @@
     /* letter */
     var L = C.letter || {};
     $('#letterHead').textContent = L.heading || '';
-    $('#letterGreet').textContent = (L.greeting || 'Dear') + ' ' + (C.herName || '') + ',';
+    var greet = L.greeting == null ? 'Dear' : L.greeting;     // "" = just her name
+    $('#letterGreet').textContent = (greet ? greet + ' ' : '') + (C.herName || '') + ',';
     $('#letterSign').innerHTML = esc(L.signOff || '') + '<b>' + esc(C.myName || '') + '</b>';
     renderLines($('#letterTa'), L.ta, { heart: true });
 

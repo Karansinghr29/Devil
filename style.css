@@ -371,6 +371,36 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   will-change:transform;
   backface-visibility:hidden;
 }
+
+/* each memory surfaces slowly instead of just appearing - a different,
+   quiet way for each photo. Only filter / opacity / clip-path move here;
+   transform stays with the JS zoom + parallax. */
+.frame__shot img{
+  transition:
+    filter 2.4s var(--ease) .25s,
+    opacity 1.9s var(--ease) .15s,
+    clip-path 2.2s var(--ease) .2s;
+}
+/* 1 - comes into focus */
+.frame:nth-child(5n+1) .frame__shot img{ filter:blur(16px) brightness(.78) saturate(.8); opacity:.5; }
+/* 2 - rises out of soft light */
+.frame:nth-child(5n+2) .frame__shot img{ filter:brightness(1.55) saturate(.45) blur(6px); opacity:0; }
+/* 3 - an old memory warming into colour */
+.frame:nth-child(5n+3) .frame__shot img{ filter:sepia(.85) blur(8px) brightness(.9); opacity:.35; }
+.frame:nth-child(5n+3).is-shown .frame__shot img{ transition-duration:3s, 2.2s, 2.2s; }
+/* 4 - a window gently opening */
+.frame:nth-child(5n+4) .frame__shot img{ filter:blur(10px); opacity:0; clip-path:inset(9% 9% 9% 9% round 16px); }
+/* 5 - a soft glow widening from the centre */
+.frame:nth-child(5n+5) .frame__shot img{ filter:blur(12px) brightness(1.2); opacity:.2; clip-path:circle(22% at 50% 45%); }
+
+.frame.is-shown .frame__shot img{ filter:none; opacity:1; }
+.frame:nth-child(5n+4).is-shown .frame__shot img{ clip-path:inset(0 0 0 0 round 0); }
+.frame:nth-child(5n+5).is-shown .frame__shot img{ clip-path:circle(80% at 50% 45%); }
+
+@media (prefers-reduced-motion:reduce){
+  .frame .frame__shot img{ filter:none !important; clip-path:none !important; }
+}
+
 .frame__shot::after{
   content:""; position:absolute; inset:0;
   background:linear-gradient(to top, rgba(7,4,13,.62) 0%, rgba(7,4,13,0) 48%);
@@ -1048,6 +1078,25 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   14% { opacity:.85; }
   70% { opacity:.55; }
   100%{ opacity:0; transform:translate3d(var(--dx,0px),-190px,0) scale(1.05); }
+}
+
+/* a warm rose aura behind the card - fades in only while the voice plays */
+.vnote::before{
+  content:""; position:absolute; inset:-34px -26px;
+  border-radius:44px;
+  background:
+    radial-gradient(55% 50% at 50% 42%, rgba(255,143,195,.30), rgba(255,143,195,0) 72%),
+    radial-gradient(45% 40% at 50% 70%, rgba(139,92,246,.20), rgba(139,92,246,0) 75%);
+  filter:blur(18px);
+  opacity:0;
+  transition:opacity 1.2s var(--ease);
+  pointer-events:none;
+  z-index:-1;
+}
+.vnote.is-speaking::before{ opacity:1; animation:vaura 3.8s ease-in-out infinite; }
+@keyframes vaura{
+  0%,100%{ transform:scale(.97); }
+  50%    { transform:scale(1.05); }
 }
 
 @media (prefers-reduced-motion: reduce){

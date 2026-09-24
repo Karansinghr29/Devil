@@ -19,8 +19,8 @@
 var CONFIG = {
 
   /* ---------- 1. NAMES + BROWSER TAB ---------- */
-  herName: "Her Name",              // used in the letter greeting
-  myName: "Me",                     // used in the letter signature
+  herName: "My charming girl",      // used in the letter greeting
+  myName: "உன்னவன் 💚",             // used in the letter signature
   pageTitle: "For You ❤",           // browser tab text (no spoilers)
 
   /* ---------- 2. OPENING SCREEN (balloons) ---------- */
@@ -367,9 +367,9 @@ var CONFIG = {
     ],
     heading: "Maybe This Song Says\nWhat I Couldn't ❤",
     note: "You've heard it a hundred times.\nHear it once more — as an answer.",
-    title: "Asku Laska",
-    subtitle: "Nanban (2012)",
-    credit: "Music: Harris Jayaraj",
+    title: "Nanban",
+    subtitle: "",
+    credit: "",
     file: "assets/song.mp3",
     artwork: "",                 // e.g. "assets/artwork.jpg"
     autoPlayWhenReached: false   // true = try to start when the section is reached
@@ -389,7 +389,7 @@ var CONFIG = {
       "சொல்லும் நேரம் மட்டும்",
       "சரியாக வர வேண்டியிருந்தது. ❤"
     ],
-    greeting: "Dear",            // rendered as: Dear <herName>,
+    greeting: "",                // rendered as: <herName>,  (e.g. "Dear" -> Dear <herName>,)
     paragraphs: [
       "I'm not good at saying things at the right moment. You've told me that yourself.",
       "You asked me once why I never just say it casually. It was never that I didn't feel it. It's that I didn't want it to sound like nothing.",
